@@ -1,6 +1,5 @@
 package Day4;
 import Day3.ConnetionFactory;
-import com.mysql.cj.protocol.Resultset;
 
 import java.sql.*;
 
