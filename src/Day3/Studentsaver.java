@@ -3,16 +3,15 @@ import java.sql.*;
 
 public class Studentsaver {
     static void Studentsave(Student student) {
-        try{
-            Connection con=ConnetionFactory.getConnection();
-            String q="INSERT INTO Student VALUES(?,?)";
-            PreparedStatement ps=con.prepareStatement(q);
-            ps.setString(1,student.getName());
-            ps.setString(2,student.getCourse());
+        String query = "INSERT INTO Student VALUES(?, ?)";
+        try (Connection con = ConnectionFactory.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+
+            ps.setString(1, student.getName());
+            ps.setString(2, student.getCourse());
             ps.execute();
-        }
-        catch(Exception e){
-            System.out.println(e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save student: " + student, e);
         }
     }
 }

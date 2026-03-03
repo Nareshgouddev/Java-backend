@@ -1,46 +1,35 @@
 package Day2;
 
+import Day3.ConnectionFactory;
+
 import java.sql.*;
 import java.util.Scanner;
 
-
 public class Connect {
-    static void main() {
-       try{
-           Class.forName("com.mysql.cj.jdbc.Driver");
-           Connection c= DriverManager.getConnection("jdbc:mysql://localhost:3306/jdbc","root","Naresh@034");
-//           String q="Insert into employee values(?,?,?)";
-//           PreparedStatement ps=c.prepareStatement(q);
-           Scanner sc=new Scanner(System.in);
-           int id=sc.nextInt();
-//           String name=sc.next();
-//           int salary=sc.nextInt();
-//           ps.setInt(1,id);
-//           ps.setString(2,name);
-//           ps.setInt(3,salary);
-//           ps.execute();
-//           ps.close();
-//           c.close();
-//           sc.close();
 
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter employee ID: ");
+        int id = sc.nextInt();
+        sc.close();
 
-           //select query
+        String query = "SELECT id, name, salary FROM employee WHERE id = ?";
+        try (Connection c = ConnectionFactory.getConnection();
+             PreparedStatement ps = c.prepareStatement(query)) {
 
-           String qu="select id,name,salary from employee where id=?";
-
-           PreparedStatement p=c.prepareStatement(qu);
-           p.setInt(1,id);
-           ResultSet result=p.executeQuery();
-           if(result.next()){
-               int realId=result.getInt("id");
-               String name=result.getString("name");
-               result.getInt("salary");
-               System.out.println(realId+" "+name);
-           }
-
-       }
-       catch (Exception e){
-           System.out.println(e);
-       }
+            ps.setInt(1, id);
+            try (ResultSet result = ps.executeQuery()) {
+                if (result.next()) {
+                    int realId = result.getInt("id");
+                    String name = result.getString("name");
+                    int salary = result.getInt("salary");
+                    System.out.println("ID: " + realId + ", Name: " + name + ", Salary: " + salary);
+                } else {
+                    System.out.println("No employee found with ID: " + id);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch employee", e);
+        }
     }
 }

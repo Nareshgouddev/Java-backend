@@ -1,25 +1,20 @@
 package Day4;
-import Day3.ConnetionFactory;
+import Day3.ConnectionFactory;
 
 import java.sql.*;
 
-
-
 public class Employee {
-    static void main() {
+    public static void main(String[] args) {
+        String query = "{call getMethod()}";
+        try (Connection c = ConnectionFactory.getConnection();
+             CallableStatement cb = c.prepareCall(query);
+             ResultSet res = cb.executeQuery()) {
 
-       try{
-           Connection c=ConnetionFactory.getConnection();
-           String query="{call getMethod()}";
-           CallableStatement cb=c.prepareCall(query);
-           ResultSet res=cb.executeQuery();
-           while(res.next()!=false){
-               System.out.println(res.getInt(1));
-               System.out.println(res.getString(2));
-           }
-       }
-       catch (Exception e){
-           System.out.println(e);
-       }
+            while (res.next()) {
+                System.out.println("ID: " + res.getInt(1) + ", Name: " + res.getString(2));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to execute stored procedure", e);
+        }
     }
 }
