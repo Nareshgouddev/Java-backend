@@ -1,7 +1,7 @@
 package Day3;
 
 public class Application {
-    static void main() {
+    public static void main(String[] args) {
         Student s=new Student("java","Naresh");
         Studentsaver.Studentsave(s);
         // 1. Standard entry

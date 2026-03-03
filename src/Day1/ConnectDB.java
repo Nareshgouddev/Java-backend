@@ -1,39 +1,32 @@
 package Day1;
 
+import Day3.ConnectionFactory;
+
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ConnectDB {
 
-    static void main() {
-        //Load class
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            //connection
-            String url="jdbc:mysql://localhost:3306/jdbc";
-            String name="root";
-            String pass="";
-            Connection c=DriverManager.getConnection(url,name,pass);
-            //statement from sql
-            Statement s=c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,0);
-            String q="Select * from employee";
-            ResultSet res=s.executeQuery(q);
-            ArrayList<Employee> e=new ArrayList<>();
+    public static void main(String[] args) {
+        String query = "SELECT id, name, salary FROM employee";
+        try (Connection c = ConnectionFactory.getConnection();
+             Statement s = c.createStatement();
+             ResultSet res = s.executeQuery(query)) {
 
-            while(res.next()==true){
-                Employee a=new Employee();
-                a.setId(res.getInt(1));
-                a.setName(res.getString(2));
-                a.setSalary(res.getInt(3));
-                e.add(a);
+            List<Employee> employees = new ArrayList<>();
+            while (res.next()) {
+                Employee e = new Employee();
+                e.setId(res.getInt("id"));
+                e.setName(res.getString("name"));
+                e.setSalary(res.getInt("salary"));
+                employees.add(e);
             }
-            for(Employee x:e){
-                System.out.println(x.getId());
+            for (Employee e : employees) {
+                System.out.println(e);
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to fetch employees", e);
         }
-
-
     }
 }

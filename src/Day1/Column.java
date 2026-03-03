@@ -1,32 +1,25 @@
 package Day1;
 
+import Day3.ConnectionFactory;
+
 import java.sql.*;
 
 public class Column {
-    static void main() {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            //connection
-            String url="jdbc:mysql://localhost:3306/jdbc";
-            String name="root";
-            String pass="Naresh@034";
-            Connection c= DriverManager.getConnection(url,name,pass);
-            //statement from sql
-            Statement s=c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,0);
-            String q="Select * from employee";
-            ResultSet res=s.executeQuery(q);
 
-            ResultSetMetaData res1 =res.getMetaData();
+    public static void main(String[] args) {
+        String query = "SELECT * FROM employee";
+        try (Connection c = ConnectionFactory.getConnection();
+             Statement s = c.createStatement();
+             ResultSet res = s.executeQuery(query)) {
 
-            System.out.println(res1.getColumnCount());
-            System.out.println(res1.getColumnType(1));
-            System.out.println(res1.getColumnTypeName(1));
-            System.out.println(res1.getCatalogName(1));
-            System.out.println(res1.getColumnDisplaySize(1));
-
-        }
-        catch (Exception e){
-            System.out.println(e);
+            ResultSetMetaData meta = res.getMetaData();
+            System.out.println("Column count:        " + meta.getColumnCount());
+            System.out.println("Column type (col 1): " + meta.getColumnType(1));
+            System.out.println("Column type name:    " + meta.getColumnTypeName(1));
+            System.out.println("Catalog name:        " + meta.getCatalogName(1));
+            System.out.println("Display size (col 1):" + meta.getColumnDisplaySize(1));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to retrieve column metadata", e);
         }
     }
 }
