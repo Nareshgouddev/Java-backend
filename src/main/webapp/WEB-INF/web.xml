@@ -1,0 +1,30 @@
+<web-app>
+  <display-name>Servlets0_1</display-name>
+
+  <welcome-file-list>
+    <welcome-file>Login.html</welcome-file>
+  </welcome-file-list>
+  
+  <servlet>
+    <servlet-name>LoginServlet</servlet-name> 
+    <servlet-class>Auth.Login</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>LoginServlet</servlet-name>
+    <url-pattern>/Login</url-pattern>
+  </servlet-mapping>
+  
+  
+  <servlet>
+  <servlet-name>RegisterServlet</servlet-name>
+  <servlet-class>Auth.register</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+  <servlet-name>RegisterServlet</servlet-name>
+  <url-pattern>/register</url-pattern>
+  </servlet-mapping>
+  
+  
+</web-app>
