@@ -12,11 +12,12 @@ import jakarta.servlet.http.*;
 
 public class Login extends HttpServlet{
 	protected void doPost(HttpServletRequest req,HttpServletResponse resp)throws ServletException,IOException{
-		String user=req.getParameter("user");
-		String pass=req.getParameter("pass");
+		String user=req.getParameter("email");
+		String pass=req.getParameter("password");
 	
 		resp.setContentType("text/html");
 		PrintWriter	p=resp.getWriter();
+		int rows=0;
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			String url="jdbc:mysql://localhost:3306/BlogSite";
@@ -33,6 +34,11 @@ public class Login extends HttpServlet{
 		    ps.setString(2, pass);
 		    ps.executeUpdate();
 			
+		    if(rows > 0) {
+		        p.print("<h1>Data saved successfully!</h1>");
+		    } else {
+		        p.print("<h1>Failed to save data.</h1>");
+		    }
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {

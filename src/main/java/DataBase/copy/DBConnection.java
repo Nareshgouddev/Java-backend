@@ -3,8 +3,6 @@ package DataBase.copy;
 import java.sql.*;
 import javax.sql.*;
 
-
-
 public class DBConnection {
         static Connection c=null;
 	public static Connection getConnection() {
