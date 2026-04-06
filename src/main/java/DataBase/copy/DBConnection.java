@@ -4,17 +4,15 @@ import java.sql.*;
 import javax.sql.*;
 
 public class DBConnection {
-        static Connection c=null;
-	public static Connection getConnection() {
+	public static final String url="jdbc:mysql://localhost:3306/BlogSite.Users";
+	public static  final String name="root";
+	public static final String pass="Naresh@034";
+	public static Connection getConnection() throws SQLException {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			String url="jdbc:mysql://localhost:3306/BlogSite";
-			String name="root";
-			String pass="Naresh@034";
-			c=DriverManager.getConnection(url,name,pass);
-		} catch (ClassNotFoundException | SQLException e) {
+		} catch (ClassNotFoundException  e) {
 			e.printStackTrace();
 		}
-		return c;
+	    return DriverManager.getConnection(url,name,pass);
 	}
 }

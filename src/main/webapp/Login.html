@@ -773,7 +773,7 @@
 
           <div class="divider" style="margin:.25rem 0">or continue with email</div>
 
-          <form novalidate id="signin-form" action="Index.html" method="POST">
+          <form novalidate id="signin-form" action="Login" method="POST">
             <!-- email -->
             <div class="field">
               <label class="field-label" for="si-email">Email</label>
@@ -844,7 +844,7 @@
 
           <div class="divider" style="margin:.25rem 0">or sign up with email</div>
 
-          <form novalidate id="signup-form" onsubmit="handleSignup(event)">
+          <form novalidate id="signup-form" action="Register" method="post">
 
             <!-- name row -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
@@ -869,7 +869,7 @@
               <label class="field-label" for="su-user">Username</label>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">//</span>
-                <input class="field-input" id="su-user" type="text" placeholder="avamercer" autocomplete="username"
+                <input class="field-input" id="su-user" type="text" placeholder="avamercer"  name="User"  autocomplete="username"
                        style="padding-left:2.8rem" required oninput="checkUsername(this)" />
               </div>
               <span class="field-hint" id="su-user-hint"></span>
@@ -880,7 +880,7 @@
               <label class="field-label" for="su-email">Email</label>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">@</span>
-                <input class="field-input" id="su-email" type="email" placeholder="you@domain.com" autocomplete="email" required />
+                <input class="field-input" id="su-email" type="email" placeholder="you@domain.com" autocomplete="email"  name="email" required />
               </div>
               <span class="field-hint" id="su-email-hint"></span>
             </div>
@@ -890,7 +890,7 @@
               <label class="field-label" for="su-pw">Password</label>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">🔑</span>
-                <input class="field-input" id="su-pw" type="password" placeholder="min 8 characters"
+                <input class="field-input" id="su-pw" type="password" placeholder="min 8 characters" name="password"
                        autocomplete="new-password" required
                        style="padding-right:3.5rem"
                        oninput="checkStrength(this.value)" />
@@ -1065,7 +1065,8 @@
       h.textContent = '✗ Enter a valid email'; h.className = 'field-hint error';
       return;
     }
-
+    
+    
     const btn = document.getElementById('signup-btn');
     btn.classList.add('loading');
     setTimeout(() => {
@@ -1074,6 +1075,7 @@
       document.getElementById('signup-success').classList.add('show');
     }, 1800);
   }
+  
 </script>
 
 </body>
