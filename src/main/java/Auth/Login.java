@@ -29,11 +29,8 @@ public class Login extends HttpServlet {
         ResultSet res=ps.executeQuery();
         
         if (res.next()) {
-            // SUCCESS: A record was found
-            // Create a session to "remember" the user
             HttpSession session = req.getSession();
             session.setAttribute("userEmail", email);
-            
             resp.sendRedirect("Index.html");
         } else {
             // FAILURE: No record found
