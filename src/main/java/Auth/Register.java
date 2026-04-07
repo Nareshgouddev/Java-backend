@@ -12,12 +12,12 @@ import java.sql.SQLException;
 
 public class Register extends HttpServlet{
 	protected void doPost(HttpServletRequest req,HttpServletResponse res)throws IOException,ServletException {
-		String user=req.getParameter("user");
+		String user=req.getParameter("User");
 		String email=req.getParameter("email");
 		String pass=req.getParameter("password");
 		int row=0;
 		try(Connection c=DBConnection.getConnection()){
-			String query="INSERT INTO Users(User,email,password) values(?,?,?)";
+			String query="INSERT INTO users(username,email,password) values(?,?,?)";
 			
 			PreparedStatement p=c.prepareStatement(query);
 			
