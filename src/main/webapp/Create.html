@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create a Post — ByteLog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* ─── TOKENS ─────────────────────────────────────────────────── */
+    :root {
+      --bg: #0e0f11;
+      --bg-card: #141618;
+      --bg-sidebar: #111214;
+      --border: #1f2125;
+      --border-hover: #2e7d32;
+      --text: #d8d9db;
+      --text-muted: #6b7280;
+      --text-dim: #4b5563;
+      --accent: #39d353;
+      --accent-dim: #1a4d26;
+      --accent-glow: rgba(57, 211, 83, .18);
+      --red: #f97316;
+      --blue: #38bdf8;
+      --yellow: #facc15;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-display: 'Playfair Display', serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+    }
+
+    /* ─── RESET ──────────────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    /* ─── SCANLINE OVERLAY ───────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(to bottom,
+          transparent 0px,
+          transparent 2px,
+          rgba(0, 0, 0, .06) 2px,
+          rgba(0, 0, 0, .06) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ─── SCROLLBAR ──────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-dim);
+      border-radius: 3px;
+    }
+
+    /* ─── HEADER / NAV ───────────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(14, 15, 17, .92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      letter-spacing: -.02em;
+    }
+
+    .logo-bracket {
+      color: var(--accent);
+    }
+
+    .logo-cursor {
+      display: inline-block;
+      width: 9px;
+      height: 1.1em;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      color: var(--text-muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      transition: color .2s;
+      position: relative;
+    }
+
+    .nav-links a::before {
+      content: '// ';
+      color: var(--accent-dim);
+      font-size: .72rem;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-links a.active {
+      color: var(--text);
+    }
+
+    .nav-badge {
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: .2em .6em;
+      border-radius: 3px;
+    }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      padding: .45rem .6rem;
+      border-radius: 4px;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    /* ─── CREATE POST PAGE ───────────────────────────────────────── */
+    .create-wrapper {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      animation: fadeUp .4s .05s both;
+    }
+
+    .breadcrumb a {
+      color: var(--text-muted);
+      transition: color .2s;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--accent);
+    }
+
+    .breadcrumb .sep {
+      color: var(--border);
+    }
+
+    .breadcrumb .current {
+      color: var(--accent);
+    }
+
+    /* Page header */
+    .create-header {
+      margin-bottom: 2.5rem;
+      animation: fadeUp .5s .1s both;
+    }
+
+    .create-header .tag-line {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--accent);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .create-header .tag-line::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .create-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+      margin-bottom: .6rem;
+    }
+
+    .create-header h1 em {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .create-header .subtitle {
+      font-size: .95rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      max-width: 50ch;
+    }
+
+    /* ─── FORM CARD ──────────────────────────────────────────────── */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      animation: fadeUp .5s .2s both;
+    }
+
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--blue), var(--accent));
+      background-size: 200% 100%;
+      animation: gradientSlide 3s ease infinite;
+    }
+
+    @keyframes gradientSlide {
+      0%, 100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    /* Form titlebar (mimics code editor tab) */
+    .form-titlebar {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: .7rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--text-dim);
+    }
+
+    .form-titlebar .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .form-titlebar .dot.red {
+      background: #ff5f57;
+    }
+
+    .form-titlebar .dot.yellow {
+      background: #febc2e;
+    }
+
+    .form-titlebar .dot.green {
+      background: #28c840;
+    }
+
+    .form-titlebar .filename {
+      margin-left: auto;
+      color: var(--text-dim);
+    }
+
+    /* Form body */
+    .form-body {
+      padding: 2rem 2rem 2.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.6rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: .75rem;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+
+    .form-group label .required {
+      color: var(--red);
+      margin-left: 2px;
+    }
+
+    .form-group label .hint {
+      color: var(--text-dim);
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: .7rem;
+      margin-left: .5rem;
+    }
+
+    .form-input,
+    .form-textarea,
+    .form-select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: .75rem 1rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: .92rem;
+      outline: none;
+      transition: border-color .25s, box-shadow .25s;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--text-dim);
+    }
+
+    .form-textarea {
+      min-height: 220px;
+      resize: vertical;
+      line-height: 1.8;
+    }
+
+    .form-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6 6.5-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
+    }
+
+    .form-select option {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+
+    /* Tags row */
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+
+    .tag-checkbox {
+      display: none;
+    }
+
+    .tag-label {
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      padding: .35em .7em;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+    }
+
+    .tag-label:hover {
+      border-color: var(--text-dim);
+      color: var(--text);
+    }
+
+    .tag-checkbox:checked+.tag-label {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* Character counter */
+    .char-count {
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--text-dim);
+      text-align: right;
+      margin-top: .3rem;
+      transition: color .2s;
+    }
+
+    .char-count.warn {
+      color: var(--red);
+    }
+
+    /* ─── FORM ACTIONS ───────────────────────────────────────────── */
+    .form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+      margin-top: .5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      font-family: var(--font-mono);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      padding: .75rem 1.6rem;
+      border-radius: 4px;
+      transition: all .25s;
+      cursor: pointer;
+      width: fit-content;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0e0f11;
+      border: 1px solid var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+
+    .btn-primary:active {
+      transform: scale(.97);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-actions-right {
+      display: flex;
+      gap: .75rem;
+    }
+
+    /* ─── LIVE PREVIEW ────────────────────────────────────────────── */
+    .preview-section {
+      margin-top: 2.5rem;
+      animation: fadeUp .5s .3s both;
+    }
+
+    .preview-label {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .preview-label::before {
+      content: '▸';
+      color: var(--accent);
+    }
+
+    .preview-label .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 var(--accent-glow);
+      }
+
+      50% {
+        opacity: .6;
+        box-shadow: 0 0 8px 4px var(--accent-glow);
+      }
+    }
+
+    .preview-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color .25s;
+    }
+
+    .preview-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .preview-card::before {
+      content: '';
+      display: block;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+
+    .preview-body {
+      padding: 1.6rem;
+    }
+
+    .preview-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: .9rem;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      padding: .2em .55em;
+      border-radius: 3px;
+      letter-spacing: .04em;
+    }
+
+    .tag-pill.green {
+      background: rgba(57, 211, 83, .12);
+      color: var(--accent);
+      border: 1px solid rgba(57, 211, 83, .25);
+    }
+
+    .tag-pill.blue {
+      background: rgba(56, 189, 248, .10);
+      color: var(--blue);
+      border: 1px solid rgba(56, 189, 248, .22);
+    }
+
+    .tag-pill.orange {
+      background: rgba(249, 115, 22, .10);
+      color: var(--red);
+      border: 1px solid rgba(249, 115, 22, .22);
+    }
+
+    .tag-pill.yellow {
+      background: rgba(250, 204, 21, .10);
+      color: var(--yellow);
+      border: 1px solid rgba(250, 204, 21, .22);
+    }
+
+    .tag-pill.purple {
+      background: rgba(199, 146, 234, .10);
+      color: #c792ea;
+      border: 1px solid rgba(199, 146, 234, .22);
+    }
+
+    .preview-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+      margin-bottom: .5rem;
+      letter-spacing: -.02em;
+    }
+
+    .preview-title.empty {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .preview-excerpt {
+      font-size: .88rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      line-height: 1.7;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .preview-excerpt.empty {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .preview-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      padding-top: .85rem;
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--text-dim);
+    }
+
+    .preview-footer .author {
+      color: var(--text-muted);
+    }
+
+    .preview-read-more {
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+    }
+
+    .preview-read-more::after {
+      content: '→';
+    }
+
+    /* ─── SUCCESS OVERLAY ─────────────────────────────────────────── */
+    .success-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(14, 15, 17, .9);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .success-overlay.show {
+      display: flex;
+    }
+
+    .success-box {
+      text-align: center;
+      animation: successPop .4s cubic-bezier(.34, 1.56, .64, 1) both;
+    }
+
+    @keyframes successPop {
+      from {
+        opacity: 0;
+        transform: scale(.8) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .success-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 20px rgba(57, 211, 83, .4));
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: .4rem;
+    }
+
+    .success-subtitle {
+      font-size: .9rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+
+    .footer-bottom {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--text-dim);
+    }
+
+    .footer-copy span {
+      color: var(--accent);
+    }
+
+    .footer-tech {
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .footer-tech .dot {
+      width: 3px;
+      height: 3px;
+      background: var(--border);
+      border-radius: 50%;
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .nav-toggle {
+        display: flex;
+      }
+
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: rgba(14, 15, 17, .97);
+        border-bottom: 1px solid var(--border);
+        padding: 1.5rem;
+        gap: 1.25rem;
+      }
+
+      .form-body {
+        padding: 1.5rem 1.2rem 2rem;
+      }
+
+      .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-actions-right {
+        justify-content: stretch;
+      }
+
+      .btn-actions-right .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .5rem;
+      }
+    }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── HEADER ──────────────────────────────────────────────────── -->
+  <header>
+    <nav class="nav-inner" aria-label="Primary navigation">
+      <a href="Index.html" class="logo" aria-label="ByteLog home">
+        <span class="logo-bracket">{</span>
+        ByteLog
+        <span class="logo-bracket">}</span>
+        <span class="logo-cursor" aria-hidden="true"></span>
+      </a>
+      <ul class="nav-links" id="navLinks" role="list">
+        <li><a href="Index.html">Home</a></li>
+        <li><a href="Deepdive.html">Deep Dives</a></li>
+        <li><a href="Opensource.html">Open Source</a></li>
+        <li><a href="About.html">About</a></li>
+        <li><a href="Profile.html">Profile</a></li>
+        <li><a href="Admin.html">Admin</a></li>
+        <li><a href="Logout">Logout</a></li>
+        <li><a href="#" class="nav-badge">Newsletter</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks"
+        aria-label="Toggle navigation">☰</button>
+    </nav>
+  </header>
+
+  <!-- ─── MAIN ─────────────────────────────────────────────────────── -->
+  <main class="create-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb" aria-label="Breadcrumb">
+      <a href="Index.html">Home</a>
+      <span class="sep">/</span>
+      <span class="current">Create Post</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="create-header">
+      <p class="tag-line">New Post</p>
+      <h1>Write something <em>brilliant</em></h1>
+      <p class="subtitle">Share your knowledge with the ByteLog community. Your post will appear on the home page
+        instantly.</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+      <div class="form-titlebar">
+        <span class="dot red" aria-hidden="true"></span>
+        <span class="dot yellow" aria-hidden="true"></span>
+        <span class="dot green" aria-hidden="true"></span>
+        <span class="filename">new_post.md</span>
+      </div>
+
+      <form class="form-body" id="createPostForm" autocomplete="off">
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="postTitle">Title <span class="required">*</span></label>
+          <input class="form-input" type="text" id="postTitle" placeholder="e.g. Understanding Rust Lifetimes..."
+            maxlength="120" required />
+          <div class="char-count" id="titleCount">0 / 120</div>
+        </div>
+
+        <!-- Author -->
+        <div class="form-group">
+          <label for="postAuthor">Author <span class="required">*</span></label>
+          <input class="form-input" type="text" id="postAuthor" placeholder="Your name" maxlength="50" required />
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label for="postCategory">Category <span class="required">*</span></label>
+          <select class="form-select" id="postCategory" required>
+            <option value="" disabled selected>Select a category…</option>
+            <option value="Tutorial">Tutorial</option>
+            <option value="Deep Dive">Deep Dive</option>
+            <option value="Performance">Performance</option>
+            <option value="System Design">System Design</option>
+            <option value="Open Source">Open Source</option>
+            <option value="Security">Security</option>
+            <option value="DevOps">DevOps</option>
+          </select>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label>Tags <span class="hint">( select up to 3 )</span></label>
+          <div class="tags-row" id="tagsRow">
+            <input type="checkbox" class="tag-checkbox" id="tagRust" value="Rust">
+            <label class="tag-label" for="tagRust">Rust</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagTS" value="TypeScript">
+            <label class="tag-label" for="tagTS">TypeScript</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagGo" value="Go">
+            <label class="tag-label" for="tagGo">Go</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagReact" value="React">
+            <label class="tag-label" for="tagReact">React</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagNode" value="Node.js">
+            <label class="tag-label" for="tagNode">Node.js</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagPython" value="Python">
+            <label class="tag-label" for="tagPython">Python</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagDocker" value="Docker">
+            <label class="tag-label" for="tagDocker">Docker</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagK8s" value="Kubernetes">
+            <label class="tag-label" for="tagK8s">Kubernetes</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagWasm" value="WebAssembly">
+            <label class="tag-label" for="tagWasm">WebAssembly</label>
+
+            <input type="checkbox" class="tag-checkbox" id="tagML" value="Machine Learning">
+            <label class="tag-label" for="tagML">Machine Learning</label>
+          </div>
+        </div>
+
+        <!-- Excerpt -->
+        <div class="form-group">
+          <label for="postExcerpt">Excerpt <span class="required">*</span> <span class="hint">— shown on the
+              card</span></label>
+          <input class="form-input" type="text" id="postExcerpt"
+            placeholder="A short summary of your post (1-2 sentences)" maxlength="200" required />
+          <div class="char-count" id="excerptCount">0 / 200</div>
+        </div>
+
+        <!-- Content -->
+        <div class="form-group">
+          <label for="postContent">Content <span class="required">*</span></label>
+          <textarea class="form-textarea" id="postContent"
+            placeholder="Write your article content here. Markdown is supported..." required></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <a href="Index.html" class="btn btn-ghost">← Cancel</a>
+          <div class="btn-actions-right">
+            <button type="submit" class="btn btn-primary" id="publishBtn">Publish Post →</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Live Preview -->
+    <section class="preview-section" aria-label="Live preview">
+      <div class="preview-label">
+        Live Preview
+        <span class="live-dot" aria-hidden="true"></span>
+      </div>
+      <div class="preview-card">
+        <div class="preview-body">
+          <div class="preview-tags" id="previewTags"></div>
+          <h3 class="preview-title empty" id="previewTitle">Your title will appear here…</h3>
+          <p class="preview-excerpt empty" id="previewExcerpt">Your excerpt will show here as a preview of the
+            card…</p>
+          <div class="preview-footer">
+            <div>
+              <span class="author" id="previewAuthor">Author</span>
+              <span> · <span id="previewDate">Today</span> · ~<span id="previewReadTime">1</span> min read</span>
+            </div>
+            <span class="preview-read-more">Read</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── SUCCESS OVERLAY ─────────────────────────────────────────── -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <div class="success-icon">✅</div>
+      <p class="success-title">Post Published!</p>
+      <p class="success-subtitle">Redirecting to home…</p>
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ───────────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2025 <span>ByteLog</span>. All rights reserved.</p>
+      <p class="footer-tech">
+        <span>HTML</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>CSS</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>Zero dependencies</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- ─── JS ─────────────────────────────────────────────────────── -->
+  <script>
+    // ── Nav toggle ─────────────────────────────────────────────
+    const toggle = document.getElementById('navToggle');
+    const links = document.getElementById('navLinks');
+    toggle.addEventListener('click', () => {
+      const open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open);
+      toggle.textContent = open ? '✕' : '☰';
+    });
+
+    // ── Tag color map ──────────────────────────────────────────
+    const tagColorMap = {
+      'Rust': 'green', 'TypeScript': 'blue', 'Go': 'orange', 'React': 'blue',
+      'Node.js': 'green', 'Python': 'yellow', 'Docker': 'blue', 'Kubernetes': 'purple',
+      'WebAssembly': 'orange', 'Machine Learning': 'yellow',
+      'Tutorial': 'green', 'Deep Dive': 'blue', 'Performance': 'orange',
+      'System Design': 'yellow', 'Open Source': 'green', 'Security': 'orange', 'DevOps': 'blue'
+    };
+
+    // ── Elements ───────────────────────────────────────────────
+    const titleInput = document.getElementById('postTitle');
+    const authorInput = document.getElementById('postAuthor');
+    const categorySelect = document.getElementById('postCategory');
+    const excerptInput = document.getElementById('postExcerpt');
+    const contentArea = document.getElementById('postContent');
+    const titleCount = document.getElementById('titleCount');
+    const excerptCount = document.getElementById('excerptCount');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewExcerpt = document.getElementById('previewExcerpt');
+    const previewTags = document.getElementById('previewTags');
+    const previewAuthor = document.getElementById('previewAuthor');
+    const previewReadTime = document.getElementById('previewReadTime');
+    const previewDate = document.getElementById('previewDate');
+    const tagCheckboxes = document.querySelectorAll('.tag-checkbox');
+    const form = document.getElementById('createPostForm');
+    const successOverlay = document.getElementById('successOverlay');
+
+    // ── Set today's date ───────────────────────────────────────
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    previewDate.textContent = dateStr;
+
+    // ── Limit tags to 3 ────────────────────────────────────────
+    tagCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const checked = document.querySelectorAll('.tag-checkbox:checked');
+        if (checked.length > 3) {
+          cb.checked = false;
+          return;
+        }
+        updatePreviewTags();
+      });
+    });
+
+    // ── Character counters ─────────────────────────────────────
+    titleInput.addEventListener('input', () => {
+      const len = titleInput.value.length;
+      titleCount.textContent = `${len} / 120`;
+      titleCount.classList.toggle('warn', len > 100);
+      updatePreviewTitle();
+    });
+
+    excerptInput.addEventListener('input', () => {
+      const len = excerptInput.value.length;
+      excerptCount.textContent = `${len} / 200`;
+      excerptCount.classList.toggle('warn', len > 170);
+      updatePreviewExcerpt();
+    });
+
+    authorInput.addEventListener('input', updatePreviewAuthor);
+    contentArea.addEventListener('input', updatePreviewReadTime);
+    categorySelect.addEventListener('change', updatePreviewTags);
+
+    // ── Preview updaters ───────────────────────────────────────
+    function updatePreviewTitle() {
+      const val = titleInput.value.trim();
+      previewTitle.textContent = val || 'Your title will appear here…';
+      previewTitle.classList.toggle('empty', !val);
+    }
+
+    function updatePreviewExcerpt() {
+      const val = excerptInput.value.trim();
+      previewExcerpt.textContent = val || 'Your excerpt will show here as a preview of the card…';
+      previewExcerpt.classList.toggle('empty', !val);
+    }
+
+    function updatePreviewAuthor() {
+      previewAuthor.textContent = authorInput.value.trim() || 'Author';
+    }
+
+    function updatePreviewReadTime() {
+      const words = contentArea.value.trim().split(/\s+/).filter(Boolean).length;
+      previewReadTime.textContent = Math.max(1, Math.ceil(words / 200));
+    }
+
+    function updatePreviewTags() {
+      previewTags.innerHTML = '';
+
+      // Category pill
+      const cat = categorySelect.value;
+      if (cat) {
+        const pill = document.createElement('span');
+        pill.className = `tag-pill ${tagColorMap[cat] || 'green'}`;
+        pill.textContent = cat;
+        previewTags.appendChild(pill);
+      }
+
+      // Selected tag pills
+      const checked = document.querySelectorAll('.tag-checkbox:checked');
+      checked.forEach(cb => {
+        const pill = document.createElement('span');
+        pill.className = `tag-pill ${tagColorMap[cb.value] || 'green'}`;
+        pill.textContent = cb.value;
+        previewTags.appendChild(pill);
+      });
+    }
+
+    // ── Form submission ────────────────────────────────────────
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      // Gather selected tags
+      const selectedTags = [];
+      document.querySelectorAll('.tag-checkbox:checked').forEach(cb => {
+        selectedTags.push(cb.value);
+      });
+
+      // Calculate read time from content
+      const words = contentArea.value.trim().split(/\s+/).filter(Boolean).length;
+      const readTime = Math.max(1, Math.ceil(words / 200));
+
+      // Build post object
+      const post = {
+        id: Date.now(),
+        title: titleInput.value.trim(),
+        author: authorInput.value.trim(),
+        category: categorySelect.value,
+        tags: selectedTags,
+        excerpt: excerptInput.value.trim(),
+        content: contentArea.value.trim(),
+        readTime: readTime,
+        date: dateStr,
+        timestamp: today.toISOString()
+      };
+
+      // Save to localStorage
+      const existing = JSON.parse(localStorage.getItem('bytelog_posts') || '[]');
+      existing.unshift(post); // newest first
+      localStorage.setItem('bytelog_posts', JSON.stringify(existing));
+
+      // Show success overlay then redirect
+      successOverlay.classList.add('show');
+      setTimeout(() => {
+        window.location.href = 'Index.html';
+      }, 1200);
+    });
+  </script>
+
+</body>
+
+</html>

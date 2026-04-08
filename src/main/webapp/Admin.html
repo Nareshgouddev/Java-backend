@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — ByteLog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* ─── TOKENS ─────────────────────────────────────────────────── */
+    :root {
+      --bg: #0e0f11;
+      --bg-card: #141618;
+      --bg-sidebar: #111214;
+      --border: #1f2125;
+      --border-hover: #2e7d32;
+      --text: #d8d9db;
+      --text-muted: #6b7280;
+      --text-dim: #4b5563;
+      --accent: #39d353;
+      --accent-dim: #1a4d26;
+      --accent-glow: rgba(57, 211, 83, .18);
+      --red: #f97316;
+      --blue: #38bdf8;
+      --yellow: #facc15;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-display: 'Playfair Display', serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+    }
+
+    /* ─── RESET ──────────────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    /* ─── SCANLINE OVERLAY ───────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(to bottom,
+          transparent 0px,
+          transparent 2px,
+          rgba(0, 0, 0, .06) 2px,
+          rgba(0, 0, 0, .06) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ─── SCROLLBAR ──────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-dim);
+      border-radius: 3px;
+    }
+
+    /* ─── HEADER / NAV ───────────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(14, 15, 17, .92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      letter-spacing: -.02em;
+    }
+
+    .logo-bracket {
+      color: var(--accent);
+    }
+
+    .logo-cursor {
+      display: inline-block;
+      width: 9px;
+      height: 1.1em;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      color: var(--text-muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      transition: color .2s;
+      position: relative;
+    }
+
+    .nav-links a::before {
+      content: '// ';
+      color: var(--accent-dim);
+      font-size: .72rem;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-links a.active {
+      color: var(--accent);
+    }
+
+    .nav-badge {
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: .2em .6em;
+      border-radius: 3px;
+    }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      padding: .45rem .6rem;
+      border-radius: 4px;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    /* ─── ADMIN LAYOUT ───────────────────────────────────────────── */
+    .admin-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* Page header */
+    .admin-header {
+      margin-bottom: 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      animation: fadeUp .5s .1s both;
+    }
+
+    .admin-header .tag-line {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--accent);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .admin-header .tag-line::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .admin-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+    }
+
+    .admin-header h1 em {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      font-family: var(--font-mono);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      padding: .75rem 1.6rem;
+      border-radius: 4px;
+      transition: all .25s;
+      cursor: pointer;
+      width: fit-content;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0e0f11;
+      border: 1px solid var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+
+    .btn-sm {
+      padding: .35rem .7rem;
+      font-size: .7rem;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+
+    .btn-danger:hover {
+      background: rgba(249, 115, 22, .1);
+      box-shadow: 0 0 12px rgba(249, 115, 22, .2);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      animation: fadeUp .5s .2s both;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .stat-title {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--text-dim);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .stat-value.accent {
+      color: var(--accent);
+    }
+
+    /* Table */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+      animation: fadeUp .5s .3s both;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .admin-table th,
+    .admin-table td {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-table th {
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      color: var(--text-dim);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, .2);
+    }
+
+    .admin-table tbody tr {
+      transition: background .2s;
+    }
+
+    .admin-table tbody tr:hover {
+      background: rgba(255, 255, 255, .02);
+    }
+
+    .admin-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .admin-table td {
+      font-size: .88rem;
+      color: var(--text-muted);
+    }
+
+    .td-title {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .td-mono {
+      font-family: var(--font-mono);
+      font-size: .75rem;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      padding: .2em .55em;
+      border-radius: 3px;
+      letter-spacing: .04em;
+    }
+
+    .tag-pill.green {
+      background: rgba(57, 211, 83, .12);
+      color: var(--accent);
+      border: 1px solid rgba(57, 211, 83, .25);
+    }
+
+    .tag-pill.blue {
+      background: rgba(56, 189, 248, .10);
+      color: var(--blue);
+      border: 1px solid rgba(56, 189, 248, .22);
+    }
+
+    .tag-pill.orange {
+      background: rgba(249, 115, 22, .10);
+      color: var(--red);
+      border: 1px solid rgba(249, 115, 22, .22);
+    }
+
+    .tag-pill.yellow {
+      background: rgba(250, 204, 21, .10);
+      color: var(--yellow);
+      border: 1px solid rgba(250, 204, 21, .22);
+    }
+
+    .tag-pill.purple {
+      background: rgba(199, 146, 234, .10);
+      color: #c792ea;
+      border: 1px solid rgba(199, 146, 234, .22);
+    }
+
+    .empty-state {
+      padding: 4rem 2rem;
+      text-align: center;
+      color: var(--text-dim);
+    }
+
+    .empty-state-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      opacity: .5;
+    }
+
+    .empty-state h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: #fff;
+      margin-bottom: .5rem;
+    }
+
+    /* ─── SUCCESS OVERLAY ─────────────────────────────────────────── */
+    .success-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(14, 15, 17, .9);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .success-overlay.show {
+      display: flex;
+    }
+
+    .success-box {
+      text-align: center;
+      animation: successPop .4s cubic-bezier(.34, 1.56, .64, 1) both;
+    }
+
+    @keyframes successPop {
+      from {
+        opacity: 0;
+        transform: scale(.8) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .success-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 20px rgba(249, 115, 22, .4));
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: .4rem;
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+
+    .footer-bottom {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--text-dim);
+    }
+
+    .footer-copy span {
+      color: var(--accent);
+    }
+
+    .footer-tech {
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .footer-tech .dot {
+      width: 3px;
+      height: 3px;
+      background: var(--border);
+      border-radius: 50%;
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .nav-toggle {
+        display: flex;
+      }
+
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: rgba(14, 15, 17, .97);
+        border-bottom: 1px solid var(--border);
+        padding: 1.5rem;
+        gap: 1.25rem;
+      }
+
+      .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .5rem;
+      }
+    }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── HEADER ──────────────────────────────────────────────────── -->
+  <header>
+    <nav class="nav-inner" aria-label="Primary navigation">
+      <a href="Index.html" class="logo" aria-label="ByteLog home">
+        <span class="logo-bracket">{</span>
+        ByteLog
+        <span class="logo-bracket">}</span>
+        <span class="logo-cursor" aria-hidden="true"></span>
+      </a>
+      <ul class="nav-links" id="navLinks" role="list">
+        <li><a href="Index.html">Home</a></li>
+        <li><a href="Deepdive.html">Deep Dives</a></li>
+        <li><a href="Opensource.html">Open Source</a></li>
+        <li><a href="About.html">About</a></li>
+        <li><a href="Profile.html">Profile</a></li>
+        <li><a href="Admin.html" class="active">Admin</a></li>
+        <li><a href="Logout">Logout</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks"
+        aria-label="Toggle navigation">☰</button>
+    </nav>
+  </header>
+
+  <!-- ─── MAIN ─────────────────────────────────────────────────────── -->
+  <main class="admin-wrapper">
+
+    <!-- Page Header -->
+    <div class="admin-header">
+      <div>
+        <p class="tag-line">Dashboard</p>
+        <h1>Manage <em>Posts</em></h1>
+      </div>
+      <a href="Create.html" class="btn btn-primary">
+        + Create Post
+      </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-title">Total Posts</span>
+        <span class="stat-value accent" id="statTotalPosts">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Total Words</span>
+        <span class="stat-value" id="statTotalWords">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Avg Read Time</span>
+        <span class="stat-value" id="statAvgReadTime">0m</span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Author</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="postsTableBody">
+          <!-- Posts will be loaded here dynamically -->
+        </tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-state-icon">📝</div>
+        <h3>No posts yet</h3>
+        <p>Nothing has been published. Why not create one?</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ─── SUCCESS OVERLAY ─────────────────────────────────────────── -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <div class="success-icon">🗑️</div>
+      <p class="success-title">Post Deleted</p>
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ───────────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2025 <span>ByteLog</span>. All rights reserved.</p>
+      <p class="footer-tech">
+        <span>HTML</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>CSS</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>Zero dependencies</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- ─── JS ─────────────────────────────────────────────────────── -->
+  <script>
+    // ── Nav toggle ─────────────────────────────────────────────
+    const toggle = document.getElementById('navToggle');
+    const links = document.getElementById('navLinks');
+    toggle.addEventListener('click', () => {
+      const open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open);
+      toggle.textContent = open ? '✕' : '☰';
+    });
+
+    // ── Tag color map ──────────────────────────────────────────
+    const tagColorMap = {
+      'Rust': 'green', 'TypeScript': 'blue', 'Go': 'orange', 'React': 'blue',
+      'Node.js': 'green', 'Python': 'yellow', 'Docker': 'blue', 'Kubernetes': 'purple',
+      'WebAssembly': 'orange', 'Machine Learning': 'yellow',
+      'Tutorial': 'green', 'Deep Dive': 'blue', 'Performance': 'orange',
+      'System Design': 'yellow', 'Open Source': 'green', 'Security': 'orange', 'DevOps': 'blue'
+    };
+
+    // ── Elements ───────────────────────────────────────────────
+    const postsTableBody = document.getElementById('postsTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const statTotalPosts = document.getElementById('statTotalPosts');
+    const statTotalWords = document.getElementById('statTotalWords');
+    const statAvgReadTime = document.getElementById('statAvgReadTime');
+    const successOverlay = document.getElementById('successOverlay');
+
+    function loadPosts() {
+      const posts = JSON.parse(localStorage.getItem('bytelog_posts') || '[]');
+      
+      statTotalPosts.textContent = posts.length;
+      
+      let totalWords = 0;
+      let totalReadTime = 0;
+
+      postsTableBody.innerHTML = '';
+
+      if (posts.length === 0) {
+        document.querySelector('.admin-table').style.display = 'none';
+        emptyState.style.display = 'block';
+      } else {
+        document.querySelector('.admin-table').style.display = 'table';
+        emptyState.style.display = 'none';
+
+        posts.forEach(post => {
+          // Calculate stats
+          const words = post.content ? post.content.trim().split(/\s+/).filter(Boolean).length : 0;
+          totalWords += words;
+          totalReadTime += post.readTime || 0;
+
+          // Category Pill
+          let categoryHtml = '-';
+          if (post.category) {
+            const catColor = tagColorMap[post.category] || 'green';
+            categoryHtml = `<span class="tag-pill ${catColor}">${post.category}</span>`;
+          }
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="td-mono">${post.date}</td>
+            <td class="td-title">${post.title}</td>
+            <td>${categoryHtml}</td>
+            <td>${post.author}</td>
+            <td>
+              <button class="btn btn-sm btn-danger" onclick="deletePost(${post.id})">Delete</button>
+            </td>
+          `;
+          postsTableBody.appendChild(tr);
+        });
+      }
+
+      statTotalWords.textContent = totalWords.toLocaleString();
+      statAvgReadTime.textContent = posts.length > 0 ? Math.round(totalReadTime / posts.length) + 'm' : '0m';
+    }
+
+    function deletePost(id) {
+      if (!confirm('Are you sure you want to delete this post?')) return;
+
+      const posts = JSON.parse(localStorage.getItem('bytelog_posts') || '[]');
+      const newPosts = posts.filter(p => p.id !== id);
+      localStorage.setItem('bytelog_posts', JSON.stringify(newPosts));
+      
+      // Show overlay and reload
+      successOverlay.classList.add('show');
+      setTimeout(() => {
+        successOverlay.classList.remove('show');
+        loadPosts();
+      }, 1000);
+    }
+
+    // Load on start
+    document.addEventListener('DOMContentLoaded', loadPosts);
+  </script>
+
+</body>
+
+</html>

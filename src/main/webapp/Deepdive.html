@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ByteLog — Deep Dives</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,300&display=swap" rel="stylesheet" />
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────────── */
+    :root {
+      --bg:          #0e0f11;
+      --bg-card:     #141618;
+      --bg-panel:    #0a0b0d;
+      --border:      #1f2125;
+      --text:        #d8d9db;
+      --muted:       #6b7280;
+      --dim:         #4b5563;
+      --accent:      #39d353;
+      --accent-dim:  #1a4d26;
+      --accent-glow: rgba(57,211,83,.15);
+      --red:         #f97316;
+      --blue:        #38bdf8;
+      --yellow:      #facc15;
+      --purple:      #c792ea;
+      --font-mono:   'JetBrains Mono', monospace;
+      --font-disp:   'Playfair Display', serif;
+      --font-body:   'Source Serif 4', Georgia, serif;
+      --radius:      6px;
+    }
+
+    /* ── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); font-size: 1rem;
+      line-height: 1.75; overflow-x: hidden;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { opacity: .75; }
+
+    /* ── SCANLINE ────────────────────────────────────────────── */
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,.055) 2px, rgba(0,0,0,.055) 4px);
+      pointer-events: none; z-index: 9999;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(14,15,17,.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+      height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .logo { font-family: var(--font-mono); font-size: 1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: .3rem; }
+    .logo .b { color: var(--accent); }
+    .logo-cur { display: inline-block; width: 8px; height: 1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .nav-links { display: flex; align-items: center; gap: 1.75rem; list-style: none; }
+    .nav-links a { font-family: var(--font-mono); font-size: .75rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; transition: color .2s; }
+    .nav-links a::before { content: '// '; color: var(--accent-dim); font-size: .7rem; }
+    .nav-links a:hover { color: var(--text); opacity: 1; }
+    .nav-links a.active { color: var(--accent); opacity: 1; }
+    .nav-badge { font-family: var(--font-mono); font-size: .7rem; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); padding: .2em .6em; border-radius: 3px; }
+
+    /* ── WRAP ───────────────────────────────────────────────── */
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ── SECTION LABEL ──────────────────────────────────────── */
+    .sec-label { display: flex; align-items: center; gap: .85rem; margin-bottom: 2.5rem; }
+    .sec-label span { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+    .sec-label span strong { color: var(--accent); }
+    .sec-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ── BADGES ─────────────────────────────────────────────── */
+    .badge { font-family: var(--font-mono); font-size: .65rem; padding: .25em .65em; border-radius: 3px; letter-spacing: .04em; white-space: nowrap; }
+    .bg { background: rgba(57,211,83,.1);  color: var(--accent); border: 1px solid rgba(57,211,83,.22); }
+    .bb { background: rgba(56,189,248,.1); color: var(--blue);   border: 1px solid rgba(56,189,248,.22); }
+    .bo { background: rgba(249,115,22,.1); color: var(--red);    border: 1px solid rgba(249,115,22,.22); }
+    .by { background: rgba(250,204,21,.1); color: var(--yellow); border: 1px solid rgba(250,204,21,.22); }
+    .bp { background: rgba(199,146,234,.1);color: var(--purple); border: 1px solid rgba(199,146,234,.22); }
+
+    /* ── HERO ───────────────────────────────────────────────── */
+    .hero {
+      padding: 6rem 0 5rem; border-bottom: 1px solid var(--border);
+      position: relative; overflow: hidden;
+    }
+    .hero::after {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 65% at 78% 35%, rgba(56,189,248,.07) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 55% at 8%  85%, rgba(57,211,83,.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-ghost {
+      position: absolute; right: -1.5rem; top: 50%; transform: translateY(-50%);
+      font-family: var(--font-mono); font-size: clamp(5.5rem, 12vw, 11rem);
+      font-weight: 700; line-height: 1;
+      color: transparent; -webkit-text-stroke: 1px rgba(56,189,248,.05);
+      user-select: none; pointer-events: none; letter-spacing: -.04em;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 700px; }
+    .hero-eyebrow {
+      font-family: var(--font-mono); font-size: .72rem; color: var(--blue);
+      letter-spacing: .16em; text-transform: uppercase;
+      display: flex; align-items: center; gap: .6rem; margin-bottom: 1.4rem;
+    }
+    .hero-eyebrow::before { content: ''; display: block; width: 28px; height: 1px; background: var(--blue); }
+    h1.hero-h1 {
+      font-family: var(--font-disp);
+      font-size: clamp(2.5rem, 5vw, 3.8rem);
+      font-weight: 700; line-height: 1.1; letter-spacing: -.02em; color: #fff; margin-bottom: 1.3rem;
+    }
+    h1.hero-h1 em { font-style: italic; color: var(--blue); }
+    .hero-p { font-size: 1.05rem; font-weight: 300; color: var(--muted); line-height: 1.8; max-width: 54ch; margin-bottom: 2rem; }
+    .hero-meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--font-mono); font-size: .72rem; color: var(--dim); }
+    .hero-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); }
+
+    /* ── TOPIC TABS ─────────────────────────────────────────── */
+    .topic-bar {
+      border-bottom: 1px solid var(--border); background: var(--bg-card);
+      position: sticky; top: 60px; z-index: 50;
+    }
+    .topic-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+      display: flex; align-items: center; gap: 0; overflow-x: auto;
+    }
+    .topic-inner::-webkit-scrollbar { display: none; }
+    .topic-tab {
+      font-family: var(--font-mono); font-size: .73rem; letter-spacing: .05em;
+      padding: 0 1.1rem; height: 52px; border: none; border-bottom: 2px solid transparent;
+      background: transparent; color: var(--muted); cursor: pointer;
+      white-space: nowrap; transition: all .2s; flex-shrink: 0;
+      display: flex; align-items: center; gap: .45rem;
+    }
+    .topic-tab .count { font-size: .6rem; background: var(--border); color: var(--dim); padding: .1em .45em; border-radius: 10px; }
+    .topic-tab:hover { color: var(--text); }
+    .topic-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .topic-tab.active .count { background: rgba(56,189,248,.15); color: var(--blue); }
+
+    /* ── FEATURED DEEP DIVE ─────────────────────────────────── */
+    .featured { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+    .feat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+      display: grid; grid-template-columns: 1fr 340px;
+      position: relative; transition: border-color .25s;
+    }
+    .feat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; background: linear-gradient(90deg, var(--blue), transparent);
+    }
+    .feat-card:hover { border-color: rgba(56,189,248,.3); }
+    .feat-body { padding: 2.5rem; }
+    .feat-side {
+      background: var(--bg-panel); border-left: 1px solid var(--border);
+      padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;
+    }
+    .feat-label {
+      font-family: var(--font-mono); font-size: .65rem; color: var(--blue);
+      letter-spacing: .12em; text-transform: uppercase; margin-bottom: .75rem;
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .feat-label::before { content: '◈'; }
+    .feat-h2 { font-family: var(--font-disp); font-size: 1.85rem; font-weight: 700; color: #fff; line-height: 1.2; letter-spacing: -.02em; margin-bottom: .8rem; }
+    .feat-h2 em { font-style: italic; color: var(--blue); }
+    .feat-desc { font-size: .96rem; color: var(--muted); font-weight: 300; line-height: 1.8; margin-bottom: 1.25rem; }
+    .feat-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.4rem; }
+    .feat-meta { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.5rem; font-family: var(--font-mono); font-size: .7rem; color: var(--dim); }
+    .feat-meta .sep { color: var(--border); }
+
+    /* reading time ring */
+    .reading-ring { display: flex; flex-direction: column; align-items: center; gap: .4rem; }
+    .ring-svg { width: 72px; height: 72px; }
+    .ring-label { font-family: var(--font-mono); font-size: .62rem; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; text-align: center; }
+    .ring-num { font-family: var(--font-mono); font-size: .85rem; font-weight: 700; color: var(--blue); }
+
+    /* TOC preview */
+    .toc-preview { display: flex; flex-direction: column; gap: 0; }
+    .toc-label { font-family: var(--font-mono); font-size: .62rem; color: var(--dim); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .6rem; }
+    .toc-item {
+      display: flex; align-items: center; gap: .6rem;
+      font-family: var(--font-mono); font-size: .72rem; color: var(--muted);
+      padding: .4rem 0; border-bottom: 1px solid var(--border);
+    }
+    .toc-item:last-child { border-bottom: none; }
+    .toc-num { color: var(--dim); font-size: .65rem; min-width: 1.4em; }
+
+    /* btn */
+    .btn {
+      display: inline-flex; align-items: center; gap: .45rem;
+      font-family: var(--font-mono); font-size: .78rem; font-weight: 700;
+      letter-spacing: .05em; padding: .65rem 1.35rem; border-radius: var(--radius);
+      transition: all .25s; cursor: pointer; border: 1px solid var(--border);
+    }
+    .btn-blue { background: var(--blue); color: #0e0f11; border-color: var(--blue); }
+    .btn-blue:hover { background: transparent; color: var(--blue); opacity: 1; box-shadow: 0 0 18px rgba(56,189,248,.2); }
+    .btn-ghost { background: transparent; color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--blue); color: var(--blue); opacity: 1; }
+
+    /* ── DIVE GRID ───────────────────────────────────────────── */
+    .dives { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+    .dive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-bottom: 1.1rem; }
+    .dive-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: border-color .25s, transform .2s, box-shadow .2s;
+      position: relative;
+    }
+    .dive-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; opacity: 0; transition: opacity .25s;
+    }
+    .dive-card.c-blue::after  { background: linear-gradient(90deg, var(--blue),   transparent); }
+    .dive-card.c-green::after { background: linear-gradient(90deg, var(--accent),  transparent); }
+    .dive-card.c-orange::after{ background: linear-gradient(90deg, var(--red),     transparent); }
+    .dive-card.c-yellow::after{ background: linear-gradient(90deg, var(--yellow),  transparent); }
+    .dive-card.c-purple::after{ background: linear-gradient(90deg, var(--purple),  transparent); }
+    .dive-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+    .dive-card:hover::after { opacity: 1; }
+    .dive-card.c-blue:hover  { border-color: rgba(56,189,248,.3); }
+    .dive-card.c-green:hover { border-color: var(--accent-dim); }
+    .dive-card.c-orange:hover{ border-color: rgba(249,115,22,.3); }
+    .dive-card.c-yellow:hover{ border-color: rgba(250,204,21,.25); }
+    .dive-card.c-purple:hover{ border-color: rgba(199,146,234,.3); }
+
+    /* thumb strip */
+    .dive-thumb {
+      height: 6px; background: var(--border); flex-shrink: 0;
+      position: relative; overflow: hidden;
+    }
+    .dive-thumb-fill { position: absolute; inset: 0; opacity: .6; }
+    .c-blue  .dive-thumb-fill { background: var(--blue); }
+    .c-green .dive-thumb-fill { background: var(--accent); }
+    .c-orange.dive-thumb-fill { background: var(--red); }
+    .c-yellow .dive-thumb-fill { background: var(--yellow); }
+    .c-purple .dive-thumb-fill { background: var(--purple); }
+
+    .dive-body { padding: 1.4rem 1.5rem; flex: 1; display: flex; flex-direction: column; gap: .75rem; }
+    .dive-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .dive-title { font-family: var(--font-disp); font-size: 1.15rem; font-weight: 700; color: #fff; line-height: 1.3; letter-spacing: -.01em; transition: color .2s; }
+    .dive-card:hover .dive-title { color: var(--blue); }
+    .c-green:hover  .dive-title { color: var(--accent) !important; }
+    .c-orange:hover .dive-title { color: var(--red) !important; }
+    .c-yellow:hover .dive-title { color: var(--yellow) !important; }
+    .c-purple:hover .dive-title { color: var(--purple) !important; }
+    .dive-excerpt { font-size: .875rem; color: var(--muted); font-weight: 300; line-height: 1.75; flex: 1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+    .dive-footer { display: flex; align-items: center; justify-content: space-between; padding-top: .85rem; border-top: 1px solid var(--border); flex-wrap: wrap; gap: .5rem; }
+    .dive-meta-sm { font-family: var(--font-mono); font-size: .67rem; color: var(--dim); display: flex; flex-direction: column; gap: .1rem; }
+    .dive-meta-sm .auth { color: var(--muted); }
+    .read-more { font-family: var(--font-mono); font-size: .7rem; color: var(--accent); display: flex; align-items: center; gap: .3rem; transition: gap .2s; }
+    .c-blue   .read-more { color: var(--blue); }
+    .c-orange .read-more { color: var(--red); }
+    .c-yellow .read-more { color: var(--yellow); }
+    .c-purple .read-more { color: var(--purple); }
+    .read-more:hover { gap: .55rem; opacity: 1; }
+    .read-more::after { content: '→'; }
+
+    /* wide single-column card */
+    .dive-card.wide { grid-column: 1 / -1; flex-direction: row; }
+    .dive-card.wide .dive-thumb { width: 6px; height: auto; flex-shrink: 0; }
+    .dive-card.wide .dive-body { flex-direction: row; align-items: center; gap: 2rem; padding: 1.5rem 2rem; }
+    .dive-card.wide .dive-body-left { flex: 1; display: flex; flex-direction: column; gap: .65rem; }
+    .dive-card.wide .dive-body-right { display: flex; flex-direction: column; align-items: flex-end; gap: .75rem; flex-shrink: 0; }
+    .dive-card.wide .dive-excerpt { -webkit-line-clamp: 2; }
+
+    /* ── SIDEBAR LAYOUT ─────────────────────────────────────── */
+    .browse { padding: 3.5rem 0; }
+    .browse-layout { display: grid; grid-template-columns: 1fr 280px; gap: 3rem; align-items: start; }
+    .browse-main { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .list-card {
+      background: var(--bg-card); padding: 1.25rem 1.5rem;
+      display: flex; align-items: flex-start; gap: 1.25rem;
+      transition: background .2s; cursor: pointer;
+    }
+    .list-card:hover { background: #191b1f; }
+    .list-num { font-family: var(--font-mono); font-size: 1rem; font-weight: 700; color: var(--border); min-width: 2em; flex-shrink: 0; line-height: 1.4; }
+    .list-body { flex: 1; }
+    .list-title { font-family: var(--font-disp); font-size: 1rem; font-weight: 700; color: #fff; line-height: 1.35; margin-bottom: .3rem; transition: color .2s; }
+    .list-card:hover .list-title { color: var(--blue); }
+    .list-excerpt { font-size: .83rem; color: var(--muted); font-weight: 300; line-height: 1.65; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .list-foot { display: flex; align-items: center; gap: .6rem; margin-top: .5rem; flex-wrap: wrap; }
+    .list-time { font-family: var(--font-mono); font-size: .65rem; color: var(--dim); }
+
+    /* sidebar widgets */
+    .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+    .widget { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .widget-title { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); padding: .75rem 1.1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: .5rem; }
+    .widget-title::before { content: '▸'; color: var(--accent); }
+
+    /* topic widget */
+    .topic-list { padding: .4rem 0; }
+    .topic-item { display: flex; align-items: center; justify-content: space-between; padding: .55rem 1.1rem; border-bottom: 1px solid var(--border); transition: background .2s; cursor: pointer; }
+    .topic-item:last-child { border-bottom: none; }
+    .topic-item:hover { background: rgba(255,255,255,.02); }
+    .topic-item-left { display: flex; align-items: center; gap: .6rem; font-size: .83rem; color: var(--muted); }
+    .topic-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .topic-cnt { font-family: var(--font-mono); font-size: .65rem; color: var(--dim); }
+
+    /* progress widget */
+    .progress-list { padding: .75rem 1.1rem; display: flex; flex-direction: column; gap: .75rem; }
+    .prog-item { display: flex; flex-direction: column; gap: .3rem; }
+    .prog-header { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: .7rem; }
+    .prog-name { color: var(--muted); }
+    .prog-val { color: var(--accent); }
+    .prog-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .prog-bar { height: 100%; border-radius: 2px; background: var(--accent); transition: width 1s ease; }
+    .prog-bar.blue { background: var(--blue); }
+    .prog-bar.orange { background: var(--red); }
+    .prog-bar.yellow { background: var(--yellow); }
+
+    /* ── NEWSLETTER ─────────────────────────────────────────── */
+    .nl-sec { padding: 5rem 0; }
+    .nl-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 3rem;
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: center; gap: 3rem;
+      position: relative; overflow: hidden;
+    }
+    .nl-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 55% 100% at 100% 50%, rgba(56,189,248,.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .nl-h2 { font-family: var(--font-disp); font-size: 1.9rem; font-weight: 700; color: #fff; line-height: 1.2; letter-spacing: -.02em; margin-bottom: .75rem; }
+    .nl-h2 em { font-style: italic; color: var(--blue); }
+    .nl-p { font-size: .93rem; color: var(--muted); font-weight: 300; line-height: 1.8; }
+    .nl-form { display: flex; flex-direction: column; gap: .75rem; min-width: 280px; }
+    .nl-input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: .72rem 1rem; color: var(--text); font-family: var(--font-mono); font-size: .78rem; transition: border-color .2s; }
+    .nl-input:focus { outline: none; border-color: var(--blue); }
+    .nl-input::placeholder { color: var(--dim); }
+    .nl-btn { background: var(--blue); color: #0e0f11; border: 1px solid var(--blue); border-radius: var(--radius); padding: .72rem 1.25rem; font-family: var(--font-mono); font-size: .78rem; font-weight: 700; cursor: pointer; letter-spacing: .05em; transition: all .25s; }
+    .nl-btn:hover { background: transparent; color: var(--blue); }
+    .nl-note { font-family: var(--font-mono); font-size: .62rem; color: var(--dim); }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer { border-top: 1px solid var(--border); background: var(--bg-card); }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .footer-logo { font-family: var(--font-mono); font-size: .92rem; font-weight: 700; color: #fff; }
+    .footer-logo .b { color: var(--accent); }
+    .footer-copy { font-family: var(--font-mono); font-size: .65rem; color: var(--dim); }
+    .footer-copy span { color: var(--accent); }
+    .footer-links { display: flex; gap: 1.25rem; }
+    .footer-links a { font-family: var(--font-mono); font-size: .7rem; color: var(--dim); }
+    .footer-links a:hover { color: var(--accent); opacity: 1; }
+
+    /* ── ANIMATIONS ─────────────────────────────────────────── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .fu { animation: fadeUp .5s ease both; }
+    .d1 { animation-delay: .1s; } .d2 { animation-delay: .2s; } .d3 { animation-delay: .3s; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .feat-card { grid-template-columns: 1fr; }
+      .feat-side { border-left: none; border-top: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; }
+      .browse-layout { grid-template-columns: 1fr; }
+      .nl-card { grid-template-columns: 1fr; }
+      .dive-card.wide { flex-direction: column; }
+      .dive-card.wide .dive-thumb { width: auto; height: 6px; }
+      .dive-card.wide .dive-body { flex-direction: column; align-items: flex-start; }
+      .dive-card.wide .dive-body-right { align-items: flex-start; }
+    }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .dive-grid { grid-template-columns: 1fr; }
+      .hero { padding: 4rem 0 3.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────── -->
+<header>
+  <nav class="nav-inner" aria-label="Primary navigation">
+    <a href="index.html" class="logo">
+      <span class="b">{</span>ByteLog<span class="b">}</span>
+      <span class="logo-cur" aria-hidden="true"></span>
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="Index.html">Home</a></li>
+      <li><a href="index.html#posts">Tutorials</a></li>
+      <li><a href="Deepdive.html" class="active">Deep Dives</a></li>
+      <li><a href="Opensource.html">Open Source</a></li>
+      <li><a href="About.html">About</a></li>
+      <li><a href="auth.html" class="nav-badge">Sign In</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ── HERO ───────────────────────────────────────────────────── -->
+<section class="hero" aria-labelledby="dd-h1">
+  <div class="wrap">
+    <div class="hero-ghost" aria-hidden="true">DEEP</div>
+    <div class="hero-content">
+      <p class="hero-eyebrow fu">Deep Dives</p>
+      <h1 class="hero-h1 fu d1" id="dd-h1">
+        Go <em>further</em> than<br>the docs do.
+      </h1>
+      <p class="hero-p fu d2">
+        Long-form technical deep dives into the internals, the edge cases, and the production
+        realities that tutorials leave out. Each piece takes weeks to research and hours to read —
+        that's the point.
+      </p>
+      <div class="hero-meta fu d3">
+        <span>⟨ 18 deep dives ⟩</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>Avg. 14 min read</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span>No fluff. No paywalls.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TOPIC TABS ──────────────────────────────────────────────── -->
+<div class="topic-bar" role="navigation" aria-label="Filter by topic">
+  <div class="topic-inner">
+    <button class="topic-tab active" onclick="switchTopic('all', this)">All <span class="count">18</span></button>
+    <button class="topic-tab" onclick="switchTopic('systems', this)">Systems <span class="count">5</span></button>
+    <button class="topic-tab" onclick="switchTopic('jvm', this)">JVM &amp; Java <span class="count">4</span></button>
+    <button class="topic-tab" onclick="switchTopic('security', this)">Security <span class="count">3</span></button>
+    <button class="topic-tab" onclick="switchTopic('db', this)">Databases <span class="count">3</span></button>
+    <button class="topic-tab" onclick="switchTopic('concurrency', this)">Concurrency <span class="count">3</span></button>
+  </div>
+</div>
+
+<!-- ── FEATURED DEEP DIVE ──────────────────────────────────────── -->
+<section class="featured" aria-labelledby="feat-h2">
+  <div class="wrap">
+    <div class="sec-label">
+      <span><strong>01</strong> — Editor's Pick</span>
+      <div class="sec-line" aria-hidden="true"></div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-body">
+        <p class="feat-label">Deep Dive · Featured</p>
+        <h2 class="feat-h2" id="feat-h2">
+          Why Rust is eating<br>the <em>systems world</em>
+        </h2>
+        <p class="feat-desc">
+          Memory safety without a garbage collector, zero-cost abstractions, and a community
+          that refuses to compromise. We go deep into the ownership model, lifetime annotations,
+          unsafe blocks, and what the Rust compiler actually generates — then benchmark it against
+          C for sorting, hashing, and allocation. The results are more nuanced than you've heard.
+        </p>
+        <div class="feat-tags">
+          <span class="badge bo">Rust</span>
+          <span class="badge bg">Systems</span>
+          <span class="badge bb">C</span>
+          <span class="badge by">Performance</span>
+        </div>
+        <div class="feat-meta">
+          <span>Ava Mercer</span>
+          <span class="sep">·</span>
+          <span>Mar 28, 2025</span>
+          <span class="sep">·</span>
+          <span>11 min read</span>
+          <span class="sep">·</span>
+          <span>3,800 words</span>
+        </div>
+        <div style="display:flex;gap:.65rem;flex-wrap:wrap">
+          <a href="#" class="btn btn-blue">Read article →</a>
+          <a href="#" class="btn btn-ghost">View source repo</a>
+        </div>
+      </div>
+      <div class="feat-side">
+        <!-- reading ring -->
+        <div class="reading-ring">
+          <svg class="ring-svg" viewBox="0 0 72 72" aria-hidden="true">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#1f2125" stroke-width="5"/>
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#38bdf8" stroke-width="5"
+              stroke-dasharray="188" stroke-dashoffset="47"
+              stroke-linecap="round" transform="rotate(-90 36 36)"/>
+            <text x="36" y="32" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#38bdf8">11</text>
+            <text x="36" y="46" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" fill="#4b5563">min</text>
+          </svg>
+          <p class="ring-label">Reading time</p>
+        </div>
+        <!-- TOC -->
+        <div class="toc-preview">
+          <p class="toc-label">Table of contents</p>
+          <div class="toc-item"><span class="toc-num">01</span>The ownership model, explained</div>
+          <div class="toc-item"><span class="toc-num">02</span>Lifetime annotations in practice</div>
+          <div class="toc-item"><span class="toc-num">03</span>When to use unsafe { }</div>
+          <div class="toc-item"><span class="toc-num">04</span>What the compiler emits</div>
+          <div class="toc-item"><span class="toc-num">05</span>Benchmark methodology</div>
+          <div class="toc-item"><span class="toc-num">06</span>Results &amp; analysis</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DIVE GRID ───────────────────────────────────────────────── -->
+<section class="dives" id="articles" aria-labelledby="dives-h2">
+  <div class="wrap">
+    <div class="sec-label">
+      <span><strong>02</strong> — Recent Deep Dives</span>
+      <div class="sec-line" aria-hidden="true"></div>
+    </div>
+
+    <!-- Row 1: two-column -->
+    <div class="dive-grid">
+      <article class="dive-card c-blue">
+        <div class="dive-thumb"><div class="dive-thumb-fill" style="background:var(--blue)"></div></div>
+        <div class="dive-body">
+          <div class="dive-tags"><span class="badge bb">TypeScript</span><span class="badge bg">Generics</span></div>
+          <h2 class="dive-title">TypeScript 5.5 — what's new and why it matters</h2>
+          <p class="dive-excerpt">Type inference got smarter, isolated declarations are finally here, and the new infer variance improvements change how you think about generics. We walk through every breaking change and what to do before you upgrade.</p>
+          <div class="dive-footer">
+            <div class="dive-meta-sm"><span class="auth">Ava Mercer</span><span>Apr 1, 2025 · 14 min</span></div>
+            <a href="#" class="read-more" aria-label="Read TypeScript 5.5 deep dive">Read</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="dive-card c-green">
+        <div class="dive-thumb"><div class="dive-thumb-fill" style="background:var(--accent)"></div></div>
+        <div class="dive-body">
+          <div class="dive-tags"><span class="badge bg">Go</span><span class="badge bp">Concurrency</span></div>
+          <h2 class="dive-title">Goroutines, channels, and the select statement</h2>
+          <p class="dive-excerpt">Go's concurrency primitives look simple on the surface. Under that surface lies a scheduler with opinions that will surprise you. We look at goroutine leaks, channel deadlocks, and the correct way to cancel work.</p>
+          <div class="dive-footer">
+            <div class="dive-meta-sm"><span class="auth">Lee Jun-Ho</span><span>Mar 8, 2025 · 12 min</span></div>
+            <a href="#" class="read-more c-green" aria-label="Read Go concurrency deep dive">Read</a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Wide card -->
+    <div class="dive-grid" style="margin-bottom:1.1rem">
+      <article class="dive-card c-yellow wide">
+        <div class="dive-thumb" style="width:6px;flex-shrink:0"><div class="dive-thumb-fill" style="background:var(--yellow);width:6px;height:100%"></div></div>
+        <div class="dive-body" style="flex-direction:row;align-items:center;gap:2rem;padding:1.5rem 2rem;display:flex;flex-wrap:wrap">
+          <div style="flex:1;display:flex;flex-direction:column;gap:.65rem;min-width:260px">
+            <div class="dive-tags"><span class="badge by">System Design</span><span class="badge bb">Databases</span></div>
+            <h2 class="dive-title" style="font-size:1.3rem">Designing for 10M users: the architecture decisions that actually matter</h2>
+            <p class="dive-excerpt">Database sharding, read replicas, and event-driven queues are obvious — the real wins come from decisions made much earlier: schema design, caching strategy, and knowing which bottleneck to tackle first.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.75rem;flex-shrink:0">
+            <div class="dive-meta-sm" style="text-align:right"><span class="auth">Priya Nair</span><span>Mar 15, 2025 · 17 min</span></div>
+            <a href="#" class="read-more" style="color:var(--yellow)" aria-label="Read system design deep dive">Read</a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Row 2: two-column -->
+    <div class="dive-grid">
+      <article class="dive-card c-orange">
+        <div class="dive-thumb"><div class="dive-thumb-fill" style="background:var(--red)"></div></div>
+        <div class="dive-body">
+          <div class="dive-tags"><span class="badge bo">Security</span><span class="badge bg">Auth</span></div>
+          <h2 class="dive-title">JWT vs Session Cookies: the authentication debate finally settled</h2>
+          <p class="dive-excerpt">Stateless JWTs sound elegant until you need to revoke one. Sessions feel old until you think about horizontal scaling. Here's a framework for choosing — plus common pitfalls of each approach in production.</p>
+          <div class="dive-footer">
+            <div class="dive-meta-sm"><span class="auth">Ava Mercer</span><span>Feb 28, 2025 · 8 min</span></div>
+            <a href="#" class="read-more" style="color:var(--red)" aria-label="Read JWT vs sessions deep dive">Read</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="dive-card c-purple">
+        <div class="dive-thumb"><div class="dive-thumb-fill" style="background:var(--purple)"></div></div>
+        <div class="dive-body">
+          <div class="dive-tags"><span class="badge bp">JVM</span><span class="badge by">Performance</span></div>
+          <h2 class="dive-title">Inside the JVM: how the G1 garbage collector actually works</h2>
+          <p class="dive-excerpt">Most Java developers treat the GC as a black box. We open it. Regions, remembered sets, concurrent marking, mixed collections — and exactly when G1 will pause your application and for how long.</p>
+          <div class="dive-footer">
+            <div class="dive-meta-sm"><span class="auth">Riku Tamba</span><span>Feb 14, 2025 · 19 min</span></div>
+            <a href="#" class="read-more" style="color:var(--purple)" aria-label="Read JVM GC deep dive">Read</a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── BROWSE ALL + SIDEBAR ────────────────────────────────────── -->
+<section class="browse" aria-labelledby="browse-h2">
+  <div class="wrap">
+    <div class="sec-label">
+      <span><strong>03</strong> — Browse All</span>
+      <div class="sec-line" aria-hidden="true"></div>
+    </div>
+    <div class="browse-layout">
+      <!-- list -->
+      <div class="browse-main" role="list" aria-labelledby="browse-h2" id="browse-h2">
+        <div class="list-card" role="listitem" tabindex="0">
+          <span class="list-num">06</span>
+          <div class="list-body">
+            <p class="list-title">Zero-cost abstractions: benchmarking Rust against C in 2025</p>
+            <p class="list-excerpt">We ran 40 micro-benchmarks across sorting, hashing, and memory allocation. The results are surprisingly nuanced.</p>
+            <div class="list-foot">
+              <span class="badge bo">Rust</span><span class="badge by">Performance</span>
+              <span class="list-time">Mar 22 · 9 min</span>
+            </div>
+          </div>
+        </div>
+        <div class="list-card" role="listitem" tabindex="0">
+          <span class="list-num">07</span>
+          <div class="list-body">
+            <p class="list-title">Building a CI/CD pipeline from scratch with GitHub Actions</p>
+            <p class="list-excerpt">Lint, test, build, Docker push, Kubernetes deploy — with secrets management and environment promotion baked in.</p>
+            <div class="list-foot">
+              <span class="badge bg">DevOps</span><span class="badge bb">Docker</span>
+              <span class="list-time">Feb 19 · 15 min</span>
+            </div>
+          </div>
+        </div>
+        <div class="list-card" role="listitem" tabindex="0">
+          <span class="list-num">08</span>
+          <div class="list-body">
+            <p class="list-title">PostgreSQL indexing strategies that changed everything</p>
+            <p class="list-excerpt">B-tree, BRIN, GiST, and partial indexes — what each one does, when to use it, and how to measure the difference.</p>
+            <div class="list-foot">
+              <span class="badge by">PostgreSQL</span><span class="badge bg">SQL</span>
+              <span class="list-time">Jan 31 · 13 min</span>
+            </div>
+          </div>
+        </div>
+        <div class="list-card" role="listitem" tabindex="0">
+          <span class="list-num">09</span>
+          <div class="list-body">
+            <p class="list-title">Docker in production: common mistakes and how to fix them</p>
+            <p class="list-excerpt">Fat images, secrets in ENV vars, no healthchecks, running as root. We see these in every repo. Here's the fix for each.</p>
+            <div class="list-foot">
+              <span class="badge bb">Docker</span><span class="badge bo">Security</span>
+              <span class="list-time">Jan 14 · 10 min</span>
+            </div>
+          </div>
+        </div>
+        <div class="list-card" role="listitem" tabindex="0">
+          <span class="list-num">10</span>
+          <div class="list-body">
+            <p class="list-title">The complete guide to Rust lifetimes</p>
+            <p class="list-excerpt">Lifetime annotations demystified. We build up from first principles — borrowing, scopes, lifetime elision, and when you actually need to annotate.</p>
+            <div class="list-foot">
+              <span class="badge bo">Rust</span><span class="badge bg">Systems</span>
+              <span class="list-time">Jan 2025 · 22 min</span>
+            </div>
+          </div>
+        </div>
+        <div class="list-card" role="listitem" tabindex="0">
+          <span class="list-num">11</span>
+          <div class="list-body">
+            <p class="list-title">How to actually learn algorithms as a working developer</p>
+            <p class="list-excerpt">Not LeetCode grinding — a deliberate practice approach tied to real engineering problems you'll encounter at work.</p>
+            <div class="list-foot">
+              <span class="badge bp">Career</span><span class="badge bb">Algorithms</span>
+              <span class="list-time">Dec 2024 · 11 min</span>
+            </div>
+          </div>
+        </div>
+        <!-- load more -->
+        <div style="padding:1.1rem 1.5rem;background:var(--bg-card);text-align:center;border-top:1px solid var(--border)">
+          <button onclick="this.textContent='Loading...'" style="font-family:var(--font-mono);font-size:.75rem;color:var(--muted);background:transparent;border:1px solid var(--border);padding:.5rem 1.25rem;border-radius:var(--radius);cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            Load more articles →
+          </button>
+        </div>
+      </div>
+
+      <!-- sidebar -->
+      <aside class="sidebar">
+        <!-- topics -->
+        <div class="widget" aria-labelledby="topics-wid">
+          <p class="widget-title" id="topics-wid">Topics</p>
+          <ul class="topic-list" role="list">
+            <li class="topic-item" role="listitem"><span class="topic-item-left"><span class="topic-dot" style="background:var(--red)"></span>Systems &amp; Rust</span><span class="topic-cnt">5</span></li>
+            <li class="topic-item" role="listitem"><span class="topic-item-left"><span class="topic-dot" style="background:var(--purple)"></span>JVM &amp; Java</span><span class="topic-cnt">4</span></li>
+            <li class="topic-item" role="listitem"><span class="topic-item-left"><span class="topic-dot" style="background:var(--blue)"></span>Concurrency</span><span class="topic-cnt">3</span></li>
+            <li class="topic-item" role="listitem"><span class="topic-item-left"><span class="topic-dot" style="background:var(--yellow)"></span>Databases</span><span class="topic-cnt">3</span></li>
+            <li class="topic-item" role="listitem"><span class="topic-item-left"><span class="topic-dot" style="background:var(--accent)"></span>Security</span><span class="topic-cnt">3</span></li>
+          </ul>
+        </div>
+        <!-- most read progress -->
+        <div class="widget" aria-labelledby="mostread-wid">
+          <p class="widget-title" id="mostread-wid">Most read</p>
+          <div class="progress-list">
+            <div class="prog-item">
+              <div class="prog-header"><span class="prog-name">Rust lifetimes guide</span><span class="prog-val">94%</span></div>
+              <div class="prog-bar-wrap"><div class="prog-bar" style="width:94%"></div></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-header"><span class="prog-name">JVM G1 GC internals</span><span class="prog-val">81%</span></div>
+              <div class="prog-bar-wrap"><div class="prog-bar blue" style="width:81%"></div></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-header"><span class="prog-name">Algorithms for devs</span><span class="prog-val">76%</span></div>
+              <div class="prog-bar-wrap"><div class="prog-bar orange" style="width:76%"></div></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-header"><span class="prog-name">PostgreSQL indexing</span><span class="prog-val">68%</span></div>
+              <div class="prog-bar-wrap"><div class="prog-bar yellow" style="width:68%"></div></div>
+            </div>
+          </div>
+        </div>
+        <!-- reading challenge -->
+        <div class="widget" aria-labelledby="challenge-wid">
+          <p class="widget-title" id="challenge-wid">2025 Reading challenge</p>
+          <div style="padding:1.1rem">
+            <p style="font-size:.83rem;color:var(--muted);font-weight:300;line-height:1.65;margin-bottom:.75rem">Read 12 deep dives this year. You're at 0. <a href="auth.html" style="color:var(--accent)">Sign in to track →</a></p>
+            <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:0%;background:var(--accent);border-radius:3px"></div>
+            </div>
+            <p style="font-family:var(--font-mono);font-size:.62rem;color:var(--dim);margin-top:.4rem">0 / 12 completed</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ── NEWSLETTER ──────────────────────────────────────────────── -->
+<section class="nl-sec" aria-labelledby="nl-h2">
+  <div class="wrap">
+    <div class="nl-card">
+      <div>
+        <h2 class="nl-h2" id="nl-h2">Get the next deep dive<br>in your <em>inbox.</em></h2>
+        <p class="nl-p">One email every week — a single long-form technical article, curated from everything the ByteLog team is researching. No digests, no roundups, no sponsored content.</p>
+      </div>
+      <div class="nl-form" role="form" aria-label="Newsletter signup">
+        <input class="nl-input" type="email" placeholder="you@domain.com" autocomplete="email" aria-label="Email address" />
+        <button class="nl-btn" onclick="this.textContent='✓ Subscribed!'">Subscribe →</button>
+        <p class="nl-note">// No spam. Unsubscribe any time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <a href="index.html" class="footer-logo"><span class="b">{</span>ByteLog<span class="b">}</span></a>
+    <nav class="footer-links" aria-label="Footer links">
+      <a href="Index.html">Home</a>
+      <a href="Deepdive.html">Deep Dives</a>
+      <a href="OpenSource.html">Open Source</a>
+      <a href="About.html">About</a>
+      <a href="Login.html">Sign In</a>
+    </nav>
+    <p class="footer-copy">© 2025 <span>ByteLog</span> · Zero ads · Zero paywalls</p>
+  </div>
+</footer>
+
+<script>
+  function switchTopic(topic, btn) {
+    document.querySelectorAll('.topic-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>

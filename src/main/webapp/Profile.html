@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Profile — ByteLog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    /* ── TOKENS ── */
+    :root {
+      --bg: #0d0d0d;
+      --bg2: #111111;
+      --bg3: #161616;
+      --card: #131313;
+      --border: #1f1f1f;
+      --border2: #2a2a2a;
+      --green: #4ade80;
+      --green-dim: #22c55e;
+      --green-glow: rgba(74, 222, 128, 0.10);
+      --text: #e8e8e8;
+      --text-muted: #555;
+      --text-mid: #888;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+
+    *,
+    *::before,
+    *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 14px; line-height: 1.6; min-height: 100vh; overflow-x: hidden; }
+
+    /* ── NAV ── */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(13, 13, 13, 0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 48px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .logo { font-family: var(--mono); font-weight: 700; font-size: 17px; color: var(--text); text-decoration: none; letter-spacing: -0.3px; }
+    .logo span { color: var(--green); }
+
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .nav-links a::before { content: '// '; color: var(--green); opacity: 0.6; }
+
+    .btn-nav { background: var(--green); color: #000; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 18px; border: none; cursor: pointer; text-decoration: none; transition: opacity 0.2s; }
+    .btn-nav:hover { opacity: 0.85; }
+
+    /* ── HERO ── */
+    .hero { border-bottom: 1px solid var(--border); padding: 80px 48px 0; position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr 480px; gap: 0; align-items: end; }
+    .hero::before { content: ''; position: absolute; top: -80px; left: -80px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(74, 222, 128, 0.05) 0%, transparent 70%); pointer-events: none; }
+    
+    .hero-left { padding-bottom: 64px; display: flex; flex-direction: column; gap: 24px; }
+    .profile-header-group { display: flex; align-items: center; gap: 32px; }
+    .avatar { width: 120px; height: 120px; border-radius: 50%; border: 1px solid var(--border2); padding: 6px; background: var(--bg2); flex-shrink: 0; }
+    .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    
+    .section-label { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--green); display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .section-label::before { content: ''; width: 32px; height: 1px; background: var(--green); }
+    .hero h1 { font-family: var(--sans); font-size: clamp(36px, 4.5vw, 56px); font-weight: 800; line-height: 1.0; letter-spacing: -1.5px; color: #fff; margin-bottom: 12px; }
+    .hero p { font-family: var(--mono); font-size: 13px; color: var(--text-mid); max-width: 500px; line-height: 1.9; }
+
+    .hero-right { border-left: 1px solid var(--border); padding: 0; align-self: stretch; display: flex; flex-direction: column; overflow: hidden; }
+    .featured-panel-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); padding: 16px 32px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+    .profile-stats { flex: 1; padding: 40px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; background: var(--bg); }
+    .stat-box { display: flex; flex-direction: column; gap: 8px; }
+    .stat-label { font-size: 10px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+    .stat-val { font-family: var(--sans); font-size: 42px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -1px; }
+
+    /* ── PAGE LAYOUT ── */
+    .page-layout { display: grid; grid-template-columns: 1fr 380px; min-height: 800px; }
+    .articles-area { padding: 48px; }
+    .articles-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .section-title { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text); }
+
+    /* ── ARTICLE CARD ── */
+    .article-card { padding: 32px 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto; gap: 40px; position: relative; transition: background 0.2s; }
+    .article-card:last-child { border-bottom: none; }
+    .article-card::before { content: ''; position: absolute; left: -24px; top: 0; bottom: 0; width: 2px; background: var(--green); transform: scaleY(0); transition: transform 0.2s ease; }
+    .article-card:hover::before { transform: scaleY(1); }
+
+    .article-left { display: flex; flex-direction: column; gap: 12px; }
+    .article-top { display: flex; align-items: center; gap: 12px; }
+    .article-series { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-mid); }
+    .article-badge-new { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; background: var(--green-glow); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.2); padding: 2px 6px; }
+
+    .article-title { font-family: var(--sans); font-size: 24px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; transition: color 0.15s; }
+    .article-title:hover { color: var(--green); }
+    .article-excerpt { font-size: 13px; color: var(--text-mid); line-height: 1.8; max-width: 600px; }
+    
+    .article-meta { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 6px; }
+    .article-meta .dot { color: var(--border2); }
+    .article-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .article-tag { font-size: 10px; color: var(--text-muted); background: var(--bg3); border: 1px solid var(--border); padding: 2px 7px; letter-spacing: 0.3px; }
+
+    .article-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 16px; min-width: 100px; }
+    .read-time { font-size: 10px; color: var(--text-muted); text-align: right; line-height: 1.8; }
+    .read-time strong { display: block; font-size: 18px; color: var(--text-mid); font-weight: 600; }
+
+    .btn-action { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; background: none; border: 1px solid var(--border2); color: var(--text-muted); padding: 7px 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-action:hover { color: #fff; border-color: var(--text); }
+    .btn-danger:hover { color: #ef4444; border-color: #ef4444; }
+
+    /* ── RIGHT SIDEBAR ── */
+    .right-sidebar { border-left: 1px solid var(--border); padding: 48px 32px; }
+    .sidebar-section { margin-bottom: 48px; }
+    .sidebar-title { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+
+    .activity-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); }
+    .activity-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item:hover { background: var(--bg2); }
+    .activity-icon { width: 28px; height: 28px; background: var(--bg3); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 2px; }
+    .activity-body { flex: 1; }
+    .activity-body p { font-size: 12px; color: var(--text-mid); line-height: 1.6; margin-bottom: 4px; }
+    .activity-body p strong { color: var(--text); font-weight: 600; }
+    .activity-time { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; }
+
+    .series-list { display: flex; flex-direction: column; gap: 2px; }
+    .series-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; text-decoration: none; }
+    .series-item:hover { background: var(--bg2); border-color: var(--border); }
+    .series-item.active { border-left: 2px solid var(--green); background: var(--bg3); }
+    .series-item-name { font-size: 12px; color: var(--text-mid); flex: 1; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+      z-index: 1000; display: none; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .modal-overlay.active { display: flex; opacity: 1; }
+    
+    .modal-box {
+      background: var(--card); border: 1px solid var(--border);
+      width: 100%; max-width: 480px; padding: 40px;
+      transform: translateY(20px); transition: transform 0.3s;
+    }
+    .modal-overlay.active .modal-box { transform: translateY(0); }
+
+    .modal-header { font-family: var(--sans); font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 24px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .form-control { width: 100%; background: var(--bg); border: 1px solid var(--border2); color: #fff; padding: 12px; font-family: var(--mono); font-size: 12px; outline: none; transition: border 0.2s; }
+    .form-control:focus { border-color: var(--green); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
+    
+    .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border2); padding: 9px 18px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+    .btn-outline:hover { color: #fff; border-color: var(--text); }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--border); padding: 24px 48px; display: flex; align-items: center; justify-content: space-between; background: var(--bg2); }
+    footer p { font-size: 11px; color: var(--text-muted); }
+    footer p span { color: var(--green); }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="Index.html" class="logo">{ ByteLog <span>}</span> ▌</a>
+    <ul class="nav-links">
+      <li><a href="Index.html">Home</a></li>
+      <li><a href="Deepdive.html">Deep Dives</a></li>
+      <li><a href="Opensource.html">Open Source</a></li>
+      <li><a href="About.html">About</a></li>
+      <li><a href="Profile.html" class="active">Profile</a></li>
+      <li><a href="Admin.html">Admin</a></li>
+      <li><a href="Logout">Logout</a></li>
+    </ul>
+    <button class="btn-nav" id="openSettingsBtnTop">Settings</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="section-label">User Profile</div>
+      <div class="profile-header-group">
+        <div class="avatar">
+          <img id="displayAvatar" src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=256" alt="Avatar"/>
+        </div>
+        <div>
+          <h1 id="displayName">System.Admin</h1>
+          <p>Lead Engineer & Editor @ ByteLog</p>
+          <div class="article-meta" style="margin-top:12px; font-size:12px;">
+            <span id="displayEmail">admin@bytelog.dev</span>
+            <span class="dot">·</span>
+            <span>Joined Jan 2025</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="hero-right">
+      <div class="featured-panel-label">// Live Stats</div>
+      <div class="profile-stats">
+        <div class="stat-box">
+          <span class="stat-label">Published</span>
+          <span class="stat-val" id="statPostsCount">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Total Words</span>
+          <span class="stat-val" id="statWordsCount">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Avg Read</span>
+          <span class="stat-val" id="statAvgRead">0m</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Reputation</span>
+          <span class="stat-val" style="color:var(--green)">1.2k</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE LAYOUT -->
+  <div class="page-layout">
+    
+    <!-- LEFT: ARTICLES -->
+    <div class="articles-area">
+      <div class="articles-header">
+        <h2 class="section-title">My Published Posts</h2>
+        <a href="Create.html" class="btn-nav" style="padding: 7px 14px;">+ New Post</a>
+      </div>
+
+      <div id="postsList"></div>
+    </div>
+
+    <!-- RIGHT: SIDEBAR -->
+    <aside class="right-sidebar">
+      
+      <!-- Account Menu -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">// Account</div>
+        <div class="series-list">
+          <a href="#" class="series-item active">
+            <span class="series-item-name">Public Profile</span>
+          </a>
+          <button class="series-item" id="openSettingsBtnSidebar" style="width:100%; text-align:left; background:transparent">
+            <span class="series-item-name">Account Settings</span>
+          </button>
+          <a href="#" class="series-item">
+            <span class="series-item-name">Saved Articles</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">// Recent Activity</div>
+        <div class="activity-list" id="activityFeed">
+          <div class="activity-item">
+            <div class="activity-icon">✓</div>
+            <div class="activity-body">
+              <p>You joined <strong>ByteLog</strong>.</p>
+              <span class="activity-time">Jan 14, 2025</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2025 <span>ByteLog</span> · Written by engineers, for engineers</p>
+    <p>Dark Luxury Profile Layout</p>
+  </footer>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+      <h2 class="modal-header">Edit Profile</h2>
+      <form id="profileForm">
+        <div class="form-group">
+          <label>Profile Name</label>
+          <input type="text" id="inputName" class="form-control" placeholder="System.Admin" required />
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="inputEmail" class="form-control" placeholder="admin@bytelog.dev" required />
+        </div>
+        <div class="form-group">
+          <label>Avatar URL (Logo)</label>
+          <input type="url" id="inputAvatar" class="form-control" placeholder="https://..." required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" id="closeSettingsBtn">Cancel</button>
+          <button type="submit" class="btn-nav">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // --- Modals & Profile Logic ---
+      const modal = document.getElementById('settingsModal');
+      const openBtn1 = document.getElementById('openSettingsBtnTop');
+      const openBtn2 = document.getElementById('openSettingsBtnSidebar');
+      const closeBtn = document.getElementById('closeSettingsBtn');
+      const profileForm = document.getElementById('profileForm');
+
+      const displayName = document.getElementById('displayName');
+      const displayEmail = document.getElementById('displayEmail');
+      const displayAvatar = document.getElementById('displayAvatar');
+
+      const inputName = document.getElementById('inputName');
+      const inputEmail = document.getElementById('inputEmail');
+      const inputAvatar = document.getElementById('inputAvatar');
+
+      // Load Profile
+      function loadProfileData() {
+        const profile = JSON.parse(localStorage.getItem('bytelog_profile')) || {
+          name: 'System.Admin',
+          email: 'admin@bytelog.dev',
+          avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=256'
+        };
+        displayName.textContent = profile.name;
+        displayEmail.textContent = profile.email;
+        displayAvatar.src = profile.avatar;
+        
+        inputName.value = profile.name;
+        inputEmail.value = profile.email;
+        inputAvatar.value = profile.avatar;
+      }
+
+      openBtn1.addEventListener('click', (e) => { e.preventDefault(); modal.classList.add('active'); });
+      openBtn2.addEventListener('click', (e) => { e.preventDefault(); modal.classList.add('active'); });
+      closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+      profileForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newProfile = {
+          name: inputName.value,
+          email: inputEmail.value,
+          avatar: inputAvatar.value
+        };
+        localStorage.setItem('bytelog_profile', JSON.stringify(newProfile));
+        loadProfileData();
+        modal.classList.remove('active');
+      });
+
+      // Init Profile
+      loadProfileData();
+
+
+      // --- Posts Logic ---
+      const postsList = document.getElementById('postsList');
+      const statPostsCount = document.getElementById('statPostsCount');
+      const statWordsCount = document.getElementById('statWordsCount');
+      const statAvgRead = document.getElementById('statAvgRead');
+      const activityFeed = document.getElementById('activityFeed');
+
+      // MOCK DATA GENERATOR
+      function ensureMockPosts() {
+        let posts = JSON.parse(localStorage.getItem('bytelog_posts') || '[]');
+        if (posts.length === 0) {
+          posts = [
+            { id: 1, title: 'Java Memory Model Explored', excerpt: 'Deep diving into thread synchronization and the happens-before relationship in Java 21.', category: 'Java', readTime: 8, date: 'Mar 10, 2025', content: 'Lorem ipsum '.repeat(100) },
+            { id: 2, title: 'Rust vs C++ in 2025', excerpt: 'Performance benchmarks simulating high-frequency trading engines.', category: 'Rust', readTime: 12, date: 'Mar 15, 2025', content: 'Lorem ipsum '.repeat(150) },
+            { id: 3, title: 'Building Custom JWT Auth', excerpt: 'Stop relying on heavy frameworks. Implement JWT signature verification from scratch.', category: 'Security', readTime: 5, date: 'Apr 02, 2025', content: 'Lorem ipsum '.repeat(80) }
+          ];
+          localStorage.setItem('bytelog_posts', JSON.stringify(posts));
+        }
+        return posts;
+      }
+
+      function loadPosts() {
+        const posts = ensureMockPosts();
+        
+        statPostsCount.textContent = posts.length;
+        let totalWords = 0;
+        let totalTime = 0;
+
+        postsList.innerHTML = '';
+        const reversedPosts = [...posts].reverse();
+
+        reversedPosts.forEach((post, index) => {
+          const isNew = index === 0;
+          const words = post.content ? post.content.trim().split(/\s+/).filter(Boolean).length : 500;
+          totalWords += words;
+          totalTime += (post.readTime || Math.max(1, Math.round(words / 200)));
+
+          let tagsHtml = `<div class="article-tags"><span class="article-tag">${post.category || 'Opinion'}</span></div>`;
+
+          const html = `
+            <div class="article-card">
+              <div class="article-left">
+                <div class="article-top">
+                  <span class="article-series">${post.category || 'General'}</span>
+                  ${isNew ? '<span class="article-badge-new">Latest</span>' : ''}
+                </div>
+                <a href="#" class="article-title">${post.title}</a>
+                <p class="article-excerpt">${post.excerpt || 'No excerpt available.'}</p>
+                <div class="article-meta">
+                  <span>${post.date || 'Just now'}</span>
+                  <span class="dot">·</span>
+                  <span>${post.readTime || 1} min read</span>
+                </div>
+                ${tagsHtml}
+              </div>
+              <div class="article-right">
+                <div class="read-time" style="text-align:right">
+                  <strong>${post.readTime || 1}</strong>min
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button class="btn-action" onclick="alert('Entering Edit Mode for post ${post.id}')">Edit</button>
+                  <button class="btn-action btn-danger" onclick="deletePost(${post.id})">Delete</button>
+                </div>
+              </div>
+            </div>
+          `;
+          postsList.insertAdjacentHTML('beforeend', html);
+        });
+
+        if (reversedPosts.length > 0) {
+          const recentTitle = reversedPosts[0].title;
+          const actHtml = `
+            <div class="activity-item">
+              <div class="activity-icon" style="color:var(--green)">★</div>
+              <div class="activity-body">
+                <p>You published <strong>${recentTitle}</strong></p>
+                <span class="activity-time">Recent</span>
+              </div>
+            </div>
+          `;
+          activityFeed.insertAdjacentHTML('afterbegin', actHtml);
+        }
+
+        statWordsCount.textContent = totalWords > 1000 ? (totalWords / 1000).toFixed(1) + 'k' : totalWords;
+        statAvgRead.textContent = posts.length > 0 ? Math.round(totalTime / posts.length) + 'm' : '0m';
+      }
+
+      window.deletePost = function(id) {
+        if (!confirm('Are you sure you want to delete this post?')) return;
+        const posts = JSON.parse(localStorage.getItem('bytelog_posts') || '[]');
+        const filtered = posts.filter(p => p.id !== id);
+        localStorage.setItem('bytelog_posts', JSON.stringify(filtered));
+        loadPosts();
+      };
+
+      loadPosts();
+    });
+  </script>
+
+</body>
+</html>
