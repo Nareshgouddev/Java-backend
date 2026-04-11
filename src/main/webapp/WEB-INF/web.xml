@@ -6,27 +6,9 @@
   version="5.0">
 
   <display-name>BlogApp</display-name>
-
+  
   <welcome-file-list>
-    <welcome-file>Login.html</welcome-file>
+    <welcome-file>index.html</welcome-file>
   </welcome-file-list>
-
-  <servlet>
-    <servlet-name>LoginServlet</servlet-name>
-    <servlet-class>Auth.Login</servlet-class>   <!-- ✅ matches class name -->
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>LoginServlet</servlet-name>
-    <url-pattern>/Login</url-pattern>
-  </servlet-mapping>
-
-  <servlet>
-    <servlet-name>RegisterServlet</servlet-name>
-    <servlet-class>Auth.Register</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>RegisterServlet</servlet-name>
-    <url-pattern>/register</url-pattern>
-  </servlet-mapping>
-
+  
 </web-app>

@@ -4,7 +4,7 @@ import java.sql.*;
 import javax.sql.*;
 
 public class DBConnection {
-	public static final String url="jdbc:mysql://localhost:3306/BlogSite.Users";
+	public static final String url="jdbc:mysql://localhost:3306/BlogSite";
 	public static  final String name="root";
 	public static final String pass="Naresh@034";
 	public static Connection getConnection() throws SQLException {

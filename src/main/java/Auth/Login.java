@@ -5,51 +5,42 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import DataBase.copy.DBConnection;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 
 public class Login extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String user = req.getParameter("email");
+        String email = req.getParameter("email");
         String pass = req.getParameter("password");
-
+        
         resp.setContentType("text/html");
-        PrintWriter p = resp.getWriter();
-        int row=0;
-
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            String url = "jdbc:mysql://localhost:3306/BlogSite";
-            String name = "root";
-            String pass1 = "Naresh@034";
-            Connection c = DriverManager.getConnection(url, name, pass1);
-
-            String query = "INSERT INTO Login(Name, password) values(?,?)";
-            PreparedStatement ps = c.prepareStatement(query);
-
-            ps.setString(1, user);
-            ps.setString(2, pass);
-            
-            System.out.println(user);
-            System.out.println(pass);
-            
-            row=ps.executeUpdate(); 
-
-            if(row>0) {
+        PrintWriter prt=resp.getWriter();
+        
+        try(Connection c=DBConnection.getConnection()){
+        	
+        	String query="SELECT * FROM USERS WHERE email=? and password=?";
+        PreparedStatement ps=c.prepareStatement(query);
+        ps.setString(1, email);
+        ps.setString(2,pass);
+        ResultSet res=ps.executeQuery();
+        
+        if (res.next()) {
+            HttpSession session = req.getSession();
+            session.setAttribute("userEmail", email);
             resp.sendRedirect("Index.html");
-            }
-            else {
-            	p.print("<h1>Insertion failed</h1>");
-            }
-            
-            System.out.println(row);
-            ps.close();
-            c.close();
-
-        } catch (ClassNotFoundException | SQLException e) {
-            p.print("<h1>Error: " + e.getMessage() + "</h1>");
-            e.printStackTrace();
+        } else {
+            // FAILURE: No record found
+            System.out.println("<h3 style='color:red'>Invalid Email or Password!</h3>");
+            System.out.println("<a href='Login.html'>Try Again</a>");
         }
+        } catch (SQLException e) {
+			
+			e.printStackTrace();
+		}
+        
     }
 }
