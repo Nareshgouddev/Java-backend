@@ -13,12 +13,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/api/auth/register")
 public class RegisterServlets extends HttpServlet {
-	
+
     private UserDao userDAO = new UserDao();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        
+
         String alias = req.getParameter("alias");
         String email = req.getParameter("email");
         String password = req.getParameter("password");
@@ -28,13 +28,14 @@ public class RegisterServlets extends HttpServlet {
             role = "user";
         }
 
+        setCorsHeaders(resp);
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
         PrintWriter out = resp.getWriter();
 
         try {
             if (email == null || password == null || alias == null || email.isEmpty() || password.isEmpty() || alias.isEmpty()) {
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400 Bad Request
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 out.print("{\"status\": \"error\", \"message\": \"All fields are required!\"}");
                 return;
             }
@@ -42,21 +43,31 @@ public class RegisterServlets extends HttpServlet {
             boolean isRegistered = userDAO.registerUser(alias, email, password, role);
 
             if (isRegistered) {
-                out.print("{\"status\": \"success\", \"message\": \"Account created successfully!\"}");
+                out.print("{\"status\": \"success\", \"message\": \"Account created successfully!\", \"userName\": \"" + alias + "\", \"role\": \"" + role + "\"}");
             } else {
-                // FAILURE: Usually means the email already exists in the database
-                resp.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
                 out.print("{\"status\": \"error\", \"message\": \"Email is already registered!\"}");
             }
-            
+
         } catch (Exception e) {
-            // SERVER ERROR
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             out.print("{\"status\": \"error\", \"message\": \"An internal database error occurred.\"}");
             e.printStackTrace();
         } finally {
             out.flush();
-            out.close();
         }
+    }
+
+    @Override
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        setCorsHeaders(resp);
+        resp.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    private void setCorsHeaders(HttpServletResponse resp) {
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+        resp.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        resp.setHeader("Access-Control-Allow-Credentials", "true");
     }
 }
