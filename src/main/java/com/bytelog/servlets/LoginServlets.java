@@ -15,13 +15,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet("api/auth/login")
+@WebServlet("/api/auth/login")
 public class LoginServlets extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-        resp.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        resp.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    	
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
@@ -60,13 +57,5 @@ public class LoginServlets extends HttpServlet {
             e.printStackTrace();
         }
         prt.flush();
-    }
-    
-    
-    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-        resp.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        resp.setHeader("Access-Control-Allow-Headers", "Content-Type");
-        resp.setStatus(HttpServletResponse.SC_OK);
     }
 }
