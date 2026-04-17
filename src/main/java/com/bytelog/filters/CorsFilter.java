@@ -37,13 +37,13 @@ public class CorsFilter implements Filter {
         // 4. Allow credentials (cookies/sessions) to be passed
         response.setHeader("Access-Control-Allow-Credentials", "true");
 
-        // 5. Handle "Preflight" requests (React sends an OPTIONS request before a POST)
+        // 5. Handle "" requests (React sends an OPTIONS request before a POST)
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
 
-        // Pass the request along the chain to your Login or Register Servlets
+        // Pass the request along the chain to your Login or 
         filterChain.doFilter(request, response);
     }
 
